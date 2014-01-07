@@ -47,7 +47,7 @@ class GeoStock:
         #Uses a wide search to collect photo_ids of available photos
         photo_ids = []
         search_params = {"thumb":"430"}
-        search_feed = requests.get('http://geostockphoto.com/photo/getSearch/apiKey/kRqJ2NgO', params=search_params)
+        search_feed = requests.get('http://geostockphoto.com/photo/getSearch/apiKey/<api_key>', params=search_params)
         all_photos = search_feed.json()
         for photo in all_photos["photo"]:
             photo_id = photo["id"]

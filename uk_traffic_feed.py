@@ -1,3 +1,8 @@
+'''This module formats a Traffic Information GeoRSS feed as provided by the UK Government for application use.
+
+Author: Hayley Hume-Merry <hayley@thundermaps.com>
+Date: 9 January 2014'''
+
 import urllib.request
 import pytz, datetime
 import time
@@ -5,9 +10,11 @@ import xml.etree.ElementTree as ET
 
 class Incidents:
     def format_feed(self):
+        #Retrieves the GeoRSS feed using the urllib.request library and stores as xml
         traffic_feed = urllib.request.urlretrieve('http://hatrafficinfo.dft.gov.uk/feeds/rss/AllEvents.xml', 'incident_feed.xml')
         tree = ET.parse('incident_feed.xml')
         listings = []
+        #iterates through the incidents and extracts information
         for item in tree.iter(tag='item'):
             incident_name = item.find('title').text
             unique_id = item.find('reference').text
@@ -16,7 +23,7 @@ class Incidents:
             latitude = item.find('latitude').text
             longitude = item.find('longitude').text
             description = item.find('description').text
-            #format each parameter into a dictionary
+            #format each parameter into JSON format for application use
             listing = {"occurred_on":format_date, 
                         "latitude":latitude, 
                         "longitude":longitude, 

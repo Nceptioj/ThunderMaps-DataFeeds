@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 class Incidents:    
     def format_feed(self):
         #Retrieves the data feed and stores it as xml
-        urllib.request.urlretrieve('http://esa.act.gov.au/feeds/currentincidents.xml', 'incident_feed.xml')
+        incidents = urllib.request.urlretrieve('http://esa.act.gov.au/feeds/currentincidents.xml', 'incident_feed.xml')
         tree = ET.parse('incident_feed.xml')
         listings = []
         for item in tree.iter(tag='item'):

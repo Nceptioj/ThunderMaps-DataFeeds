@@ -1,4 +1,5 @@
-'''This module formats the Scotland Roadworks - GeoRSS data feed taken from <www.trafficscotland.org> into a JSON format for application use.
+'''This module formats the Scotland Roadworks - GeoRSS data feed taken from <www.trafficscotland.org> into a JSON 
+format for application use.
 
 Author: Hayley Hume-Merry <hayley@thundermaps.com>
 Date: 9 January 2014'''

@@ -16,20 +16,15 @@ class Incidents:
         listings = []
         #iterates through the incidents and extracts information
         for item in tree.iter(tag='item'):
-            incident_name = item.find('title').text
-            unique_id = item.find('reference').text
             date = item.find('pubDate').text
             format_date = self.format_datetime(date)
-            latitude = item.find('latitude').text
-            longitude = item.find('longitude').text
-            description = item.find('description').text
             #format each parameter into JSON format for application use
             listing = {"occurred_on":format_date, 
-                        "latitude":latitude, 
-                        "longitude":longitude, 
-                        "description":description,
-                        "category_name":incident_name,
-                        "source_id":unique_id}
+                        "latitude":item.find('latitude').text, 
+                        "longitude":item.find('longitude').text, 
+                        "description":item.find('description').text,
+                        "category_name":item.find('category').text,
+                        "source_id":item.find('reference').text}
             #create a list of dictionaries
             listings.append(listing)
         return listings

@@ -31,7 +31,7 @@ class Fires():
                        "latitude":latitude, 
                        "longitude":longitude, 
                        "description":description,
-                       "category_name":title,
+                       "category_name":title + 'QLD Fire Incidents',
                        "source_id":fire_id
                 }
             listings.append(listing)

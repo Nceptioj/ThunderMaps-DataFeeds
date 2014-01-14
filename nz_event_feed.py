@@ -9,14 +9,16 @@ import pytz, datetime
 
 class Events:
     def format_feed(self):
+        print('z')
         listings = []
         #Retrieves and formats the event data from EventFinda's API ... Authentication is required
-        authentication = ('<username>', '<password>')
+        authentication = ('thundermaps', 'jfjhbg4mczwj')
         headers={
-            "X-Mashape-Authorization": "<Mashape_Auth>"
+            "X-Mashape-Authorization": "ihWKCSoyyH79fPISjzYUs6D6xBho8HUg"
           }    
         event_feed = requests.get("https://eventfinda-eventfinda-nz.p.mashape.com/events.json", auth=authentication, headers=headers)
         event_info = event_feed.json()
+        print('y')
         for event in event_info['events']:
             #Formats the required data into reports
             location = event['point']
@@ -41,6 +43,7 @@ class Events:
                        "category_name":event_type,
                        "source_id":event_id,}
             listings.append(listing)
+        print(listings)
         return listings
                 
     def format_datetime(self, date):

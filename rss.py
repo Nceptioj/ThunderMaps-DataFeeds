@@ -2,31 +2,31 @@
 
 # Designed to fetch timed RSS data from NASA's spot the station feed but could be modified for other feeds.
 # NASA's feed is updated every two weeks with the next two weeks entries so this will check the feed for
-# occurances in the next half hour. 
+# occurances in the next day.
 # Author: Fraser Thompson
 
-import feedparser, re
-from datetime import datetime, timedelta
-from time import strptime
+import feedparser
+from datetime import datetime
 
 # Individual RSS entry
 class Entry:
     def __init__(self, title, desc, guid):
-        desc_dict = self.splitDesc(desc)
+        desc_dict = self.splitDesc(desc) # For internal use
+        self.desc_str = desc #Raw description
+        # Modify the following to extract fields from the description.
         self.duration = desc_dict["Duration"]
         self.approach = desc_dict["Approach"]
         self.departure = desc_dict["Departure"]
-        self.occured_on = self.makeDateTime(desc_dict)
         self.guid = guid
+        self.occured_on = self.makeDateTime(desc_dict)
         self.category_name = title[11:] # Where to get the category name from. In this case it's in the first 11 characters of the title.
-        
 
     # Whips up an easily comparable datetime object from the Date and Time fields of the RSS entry
     # Gets called by splitDesc.
     @staticmethod
     def makeDateTime(string):
         updated_str = string['Date'] + " " + string['Time']
-        
+
         # Because NASA formats their times inconsistently...
         format_12 = '%A %b %d, %Y %I:%M %p'
         format_24 = '%A %b %d, %Y %H:%M %p'
@@ -42,25 +42,23 @@ class Entry:
     @staticmethod
     def splitDesc(desc):
         desc = " ".join(desc.split())
-        desc_dict = dict(item.split(': ') for item in desc.split(' <br /> '))
+        desc_dict = dict(item.split(': ') for item in desc.split(' <br/> '))
         desc_dict["Departure"] = desc_dict["Departure"][:-7] #because of a pesky regex thing
         return desc_dict
 
-    # Returns string of category name
-    def getCategory(self):
-        return self.category_name
+    # Makes a report for each RSS entry to be used by ThunderMaps.
+    def makeReport(self):
+        listing = {"occurred_on":self.occured_on.strftime('%m/%d/%Y %M:%I %p'),
+                    "latitude": -41.288,
+                    "longitude": 174.7772,
+                    "description": self.getDescription(),
+                    "category_name":self.category_name + " - NASA Alert",
+                    "source_id":self.guid}
+        return listing
 
-    # Returns datetime object
-    def getDateTime(self):
-        return self.occured_on
-
-    # Returns string of formatted description
+    # Returns string of formatted description for ThunderMaps
     def getDescription(self):
-        return "Visible for: " + self.duration + ", Arrival: " + self.approach + ", Departure: " + self.departure
-
-    # Returns string of GUID used to check for duplicates
-    def getGUID(self):
-        return self.guid
+        return "Travelling from ", self.approach, " to ", self.departure, " for ", self.duration, "."
 
 # Entire RSS feed
 class Feed:
@@ -74,21 +72,20 @@ class Feed:
         all_entries = []
 
         for i in range(0, self.getLength()):
+            # May be named differently in your feed. There may also be other relevant fields which you can parse
+            # and send to rss_obj as parameters.
             title = self.rss_parsed['entries'][i]['title']
             desc = self.rss_parsed['entries'][i]['description']
             guid = self.rss_parsed['entries'][i]['guid']
-            
+
             rss_obj = Entry(title, desc, guid)
 
             # Checks to see if the event happens today
             if rss_obj.occured_on.day == self.time_now.day:
-                # Adds the object to the list of valid entries
-                all_entries.append(rss_obj)
-            
+                # Adds the report to the list of valid entries
+                all_entries.append(rss_obj.makeReport())
+
         return all_entries
 
     def getLength(self):
         return len(self.rss_parsed['entries'])
-
-    def getUpdateTime(self):
-        return self.time_now

@@ -13,7 +13,7 @@ import time
 
 class ThunderMaps:
 	# Which server to use. "app" is the production server, "staging" is the staging server.
-	server = "app"
+	server = "staging"
 
 	# Create a new ThunderMaps instance with the API key.
 	def __init__(self, key):
@@ -21,7 +21,7 @@ class ThunderMaps:
 
 	# Set whether to use the staging server.
 	def staging(self, on=True):
-		self.server = "staging" if on else "app"
+		self.server = "staging" if on else "api"
 
 	# Send a list of reports to ThunderMaps.
 	def sendReports(self, account_id, reports):
@@ -31,9 +31,10 @@ class ThunderMaps:
 			params = {"account_id": account_id, "key": self.key}
 			headers = {"Content-Type": "application/json"}
 			resp = requests.post(url, params=params, data=data, headers=headers)
+			print(resp)
 			return resp
 		except Exception as e:
-			print "[%s] Error creating reports: %s" % (time.strftime("%c"), e)
+			print("[%s] Error creating reports: %s" % (time.strftime("%c"), e))
 			return None
 
 	# Get a list of reports from ThunderMaps.
@@ -45,7 +46,7 @@ class ThunderMaps:
 			while more:
 				url = "http://%s.thundermaps.com/api/reports/" % self.server
 				params = {"account_id": account_id, "key": self.key, "page": page}
-				print "url=%s params=%s" % (url, params)
+				print("url=%s params=%s" % (url, params))
 				resp = requests.get(url, params=params)
 				r = resp.json()
 				if len(r) == 0:
@@ -55,7 +56,7 @@ class ThunderMaps:
 					page = page + 1
 			return result
 		except Exception as e:
-			print "[%s] Error getting reports: %s" % (time.strftime("%c"), e)
+			print("[%s] Error getting reports: %s" % (time.strftime("%c"), e))
 			return None
 
 	# Delete a specific report from ThunderMaps.
@@ -66,5 +67,5 @@ class ThunderMaps:
 			resp = requests.delete(url, params=params)
 			return resp
 		except Exception as e:
-			print "[%s] Error deleting report: %s" % (time.strftime("%c"), id, e)
+			print("[%s] Error deleting report: %s" % (time.strftime("%c"), id, e))
 			return None

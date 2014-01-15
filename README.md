@@ -8,7 +8,8 @@ It's currently set up to work with NASA's [SpotTheStation](http://spotthestation
 Dependencies
 ------------
 
-* The `feedparser` library for Python.
+* The `feedparser` library for Python3.
+* The `requests` library for Python3.
 * A Thundermaps API key and account ID.
 * The URL of some RSS or Atom feed to grab from.
 
@@ -17,7 +18,7 @@ Usage
 
 ### RSS module
 
-To use the RSS module, import it into your code using `import rss` and create an instance of the `Feed` class with the URL of your feed and the update time as parameters. 
+To use the RSS module, import it into your code using `import rss` and create an instance of the `Feed` class with the URL of your feed as a parameter.
 
 To get a list of entries, you can use the `getFeed()` method:
 
@@ -25,18 +26,40 @@ To get a list of entries, you can use the `getFeed()` method:
 import rss
 
 # Create object for RSS feed
-feed_url = 'http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml' 
-feed_obj = rss.Feed(feed_url, last_updated)
+feed_url = 'http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml'
+feed_obj = rss.Feed(feed_url)
 
 # Load the data which happens since data was last retrieved.
 items = feed_obj.getFeed()
 ```
 
-rss.py will have to be modified for each individual feed so that it grabs from the correct fields. The following methods will also need some modification:
+rss.py will have to be modified for each individual feed so that it grabs from the correct fields.
+
+The `Entry` class has a method `splitDesc(desc)` which splits a description grabbed from an RSS feed into a dictionary so that it can be processed easily. For example:
+
+```
+Date: Tuesday Jan 14, 2014 <br/>;
+Time: 9:19 PM <br/>;
+Duration: less than  1 minute <br/>;
+Maximum Elevation: 12 <br/>;
+Approach: 12 above SSE <br/>;
+Departure: 106 above SSE <br/>;
+```
+
+...gets split into:
+
+```python
+{"Date": "Tuesday Jan 14, 2014", "Time": "9:19 PM", "Duration": "less than 1 minute", "Maximum Elevation": "12", "Approach": "12 above SSE", "Departure": "106 above SSE"}
+```
+
+...and then it assembles description string from these fields in the `getDescription()` method.
+
+The following methods will likely need some modification:
 
 * `getDescription()` returns a description string, assembled from various fields
-* `getDateTime()` returns the occured_on time/date
+* `getDateTime()` returns the occured_on datetime object.
 * `getCategory()` returns the category name.
+* `makeReport()` returns the formatted report for ThunderMaps.
 
 NASA's feed posts a big batch of events every few weeks. Rather than sending them all to Thundermaps (including ones into the past and far into the future), rss.py is currently set to send all the events which are happening today. This functionality can be changed or removed entirely in the following lines:
 
@@ -77,11 +100,10 @@ import updater
 # Key, account, categories...
 THUNDERMAPS_API_KEY = "your api key"
 THUNDERMAPS_ACCOUNT_ID = "your account id"
-THUNDERMAPS_CATEGORY_ID = {"ISS Sighting": 11870, "CYGNUS Sighting": 11871}
 RSS_FEED_URL = 'http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml'
 
 # Create updater
-rss_updater = updater.Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID, RSS_FEED_URL, THUNDERMAPS_CATEGORY_ID)
+rss_updater = updater.Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID, RSS_FEED_URL)
 
 # Start updating
 rss_updater.start()
@@ -94,4 +116,4 @@ rss_updater.start()
 
 These modules are currently used in this Thundermaps accounts:
 
-* [NASA ISS Sightings Wellington](http://www.thundermaps.com/accounts/gdfgsdfg)
+* [NASA Space Station Sightings](http://www.thundermaps.com/accounts/gdfgsdfg)

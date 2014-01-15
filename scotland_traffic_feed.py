@@ -12,12 +12,13 @@ class Incidents:
             date = item.find('pubDate').text
             format_date = self.format_datetime(date)
             location = item[3].text.split()
+            incident_type = item.find('title').text.split(' - ')
             #format each parameter into a dictionary
             listing = {"occurred_on":format_date, 
                         "latitude":location[0], 
                         "longitude":location[1], 
                         "description":item.find('description').text.replace('<p>', '').replace('</p>', ''),
-                        "category_name":item.find('title').text,
+                        "category_name":incident_type[1],
                         "source_id": unique_id[3]}
             #create a list of dictionaries
             listings.append(listing)

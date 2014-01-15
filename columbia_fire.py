@@ -23,7 +23,7 @@ class Dispatch:
                         "latitude":item.find('.//{http://www.w3.org/2003/01/geo/wgs84_pos#}lat').text, 
                         "longitude":item.find('.//{http://www.w3.org/2003/01/geo/wgs84_pos#}long').text, 
                         "description": item.find('description').text,
-                        "category_name": item.find('title').text.title() + ' - Columbia 911 Fire Dispatch',
+                        "category_name": item.find('title').text.title() + ' - Columbia Fire Dispatch',
                         "source_id":item.find('.//{http://www.gocolumbiamo.com/PSJC/Services/911/911dispatch/calldatachema.php#}InNum').text}
             #create a list of dictionaries
             listings.append(listing)

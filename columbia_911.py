@@ -6,7 +6,6 @@ Date: 09 January 2014"""
 import urllib.request
 import pytz, datetime
 import xml.etree.ElementTree as ET
-from xml.sax.saxutils import escape
 
 
 class Dispatch:

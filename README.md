@@ -29,11 +29,9 @@ import rss
 feed_url = 'http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml'
 feed_obj = rss.Feed(feed_url)
 
-# Load the data which happens since data was last retrieved.
+# Load the data
 items = feed_obj.getFeed()
 ```
-
-rss.py will have to be modified for each individual feed so that it grabs from the correct fields.
 
 The `Entry` class has a method `splitDesc(desc)` which splits a description grabbed from an RSS feed into a dictionary so that it can be processed easily. For example:
 
@@ -52,20 +50,22 @@ Departure: 106 above SSE <br/>;
 {"Date": "Tuesday Jan 14, 2014", "Time": "9:19 PM", "Duration": "less than 1 minute", "Maximum Elevation": "12", "Approach": "12 above SSE", "Departure": "106 above SSE"}
 ```
 
-...and then it assembles description string from these fields in the `getDescription()` method.
+...and then the description string is assembled in the `getDescription()` method.
 
-The following methods will likely need some modification:
+rss.py will have to be modified for each individual feed so that it grabs from the correct fields. The following methods will likely need some modification:
 
-* `getDescription()` returns a description string, assembled from various fields
-* `getDateTime()` returns the occured_on datetime object.
-* `getCategory()` returns the category name.
-* `makeReport()` returns the formatted report for ThunderMaps.
+* `__init__` method for the `Entry` class and the `getFeed()` method in the `Feed` class so that the right fields are passed to it
+* `getDescription()` which returns a description string, assembled from various fields
+* `getDateTime()` which returns the occured_on datetime object
+* `getCategory()` which returns the category name
+* `makeReport()` which returns the formatted report for ThunderMaps.
+
 
 NASA's feed posts a big batch of events every few weeks. Rather than sending them all to Thundermaps (including ones into the past and far into the future), rss.py is currently set to send all the events which are happening today. This functionality can be changed or removed entirely in the following lines:
 
 ```python
 # Checks to see if the event happens today
-    if rss_obj.occured_on.day == self.time_now.day:
+    if rss_obj.occured_on.day == self.time_now.day && rss_obj.maximum_elevation > 40:
         # Adds the object to the list of valid entries
         all_entries.append(rss_obj)
 ```
@@ -92,7 +92,7 @@ The updater module combines both the RSS and ThunderMaps module and provides a h
 * Creating a new instance of `Updater` with a ThunderMaps API key, account_id, URL of RSS feed, and a categories dictionary.
 * Starting the updater with the `start()` method. You can optionally set an update_interval in hours. For example `start(1)` would set it to update every hour. By default it will update daily.
 
-An example usage is shown below.
+An example usage is shown below and contained in the `self_updating_rss.py` file.
 
 ```
 import updater

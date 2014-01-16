@@ -9,7 +9,7 @@ THUNDERMAPS_ACCOUNT_ID = ""
 RSS_FEED_URL = 'http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml'
 
 # Create updater
-rss_updater = updater.Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID, RSS_FEED_URL)
+nasa_updater = updater.Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID, RSS_FEED_URL)
 
 # Start updating
-rss_updater.start()
+nasa_updater.start()

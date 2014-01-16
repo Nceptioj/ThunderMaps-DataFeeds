@@ -43,12 +43,12 @@ class Entry:
     def splitDesc(desc):
         desc = " ".join(desc.split())
         desc_dict = dict(item.split(': ') for item in desc.split(' <br/> '))
-        desc_dict["Departure"] = desc_dict["Departure"][:-7] #because of a pesky regex thing
+        desc_dict["Departure"] = desc_dict["Departure"][:-6] #because of a pesky regex thing
         return desc_dict
 
     # Makes a report for each RSS entry to be used by ThunderMaps.
     def makeReport(self):
-        listing = {"occurred_on":self.occured_on.strftime('%m/%d/%Y %M:%I %p'),
+        listing = {"occurred_on":self.occured_on.strftime('%d/%m/%Y %I:%M %p'),
                     "latitude": -41.288,
                     "longitude": 174.7772,
                     "description": self.getDescription(),
@@ -58,7 +58,8 @@ class Entry:
 
     # Returns string of formatted description for ThunderMaps
     def getDescription(self):
-        return "Travelling from ", self.approach, " to ", self.departure, " for ", self.duration, "."
+        description_str = "Travelling from " + self.approach + " to " + self.departure + " for " + self.duration + "."
+        return description_str
 
 # Entire RSS feed
 class Feed:

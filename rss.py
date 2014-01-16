@@ -11,12 +11,15 @@ from datetime import datetime
 # Individual RSS entry
 class Entry:
     def __init__(self, title, desc, guid):
-        desc_dict = self.splitDesc(desc) # For internal use
-        self.desc_str = desc #Raw description
+        # Raw Description, used if description needs no processing
+        self.desc_str = desc 
+        # Description which has been split into a dictionary
+        desc_dict = self.splitDesc(desc) 
         # Modify the following to extract fields from the description.
         self.duration = desc_dict["Duration"]
         self.approach = desc_dict["Approach"]
         self.departure = desc_dict["Departure"]
+        self.maximum_elevation = int(desc_dict["Maximum Elevation"][:2])
         self.guid = guid
         self.occured_on = self.makeDateTime(desc_dict)
         self.category_name = title[11:] # Where to get the category name from. In this case it's in the first 11 characters of the title.
@@ -66,7 +69,7 @@ class Feed:
     def __init__(self, rss):
         self.rss = rss
 
-    # Creates a feedparser object for feed, processes it, returns array of rss_objects for each valid entry.
+    # Creates a feedparser object for feed, processes it, return list of report dicts for each valid entry.
     def getFeed(self):
         self.rss_parsed = feedparser.parse(self.rss)
         self.time_now = datetime.now()
@@ -81,8 +84,8 @@ class Feed:
 
             rss_obj = Entry(title, desc, guid)
 
-            # Checks to see if the event happens today
-            if rss_obj.occured_on.day == self.time_now.day:
+            # Checks to see if the event happens today and if it will be visible (above 40 degrees elevation)
+            if rss_obj.occured_on.day == self.time_now.day && rss_obj.maximum_elevation > 40:
                 # Adds the report to the list of valid entries
                 all_entries.append(rss_obj.makeReport())
 

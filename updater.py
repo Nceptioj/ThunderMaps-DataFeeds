@@ -25,7 +25,7 @@ class Updater:
 		# Run until interrupt received.
 		print("* Updating...")
 		while True:
-			# Load the data
+			# Load the data. This is a list of dicts.
 			items = self.feed_obj.getFeed()
 
 			# Create reports for the listings.

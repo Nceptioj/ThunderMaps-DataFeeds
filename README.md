@@ -34,6 +34,7 @@ items = feed_obj.getFeed()
 ```
 In order to customize it for your feed you will need to modify the `Entry` class in rss.py. First you will need to assign fields in the `__init__` method:
 
+```python
 def __init__(self, rss_parsed):
         # Extracting fields from the feed data
         self.title = rss_parsed['title']
@@ -54,8 +55,9 @@ def __init__(self, rss_parsed):
         # Location data
         self.latitude = -41.288
         self.longitude = 174.7772
+```
 
-You can add as many or as few fields as you want. 
+You can have as many or as few fields as you want. 
 
 The `Entry` class has a method `splitDesc(desc)` which splits a description grabbed from an RSS feed into a dictionary so that it can be processed easily. For example:
 
@@ -80,7 +82,7 @@ Departure: 106 above SSE <br/>;
 # Returns string of formatted description for ThunderMaps
 def getDescription(self):
 	description_str = "Travelling from " + self.approach + " to " + self.departure + " for " + self.duration + "."
-        return description_str
+	return description_str
 ```
 
 Other methods in the Entry class which may need modification:

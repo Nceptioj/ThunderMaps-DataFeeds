@@ -85,7 +85,7 @@ class Feed:
             rss_obj = Entry(title, desc, guid)
 
             # Checks to see if the event happens today and if it will be visible (above 40 degrees elevation)
-            if rss_obj.occured_on.day == self.time_now.day && rss_obj.maximum_elevation > 40:
+            if rss_obj.occured_on.day == self.time_now.day & rss_obj.maximum_elevation > 40:
                 # Adds the report to the list of valid entries
                 all_entries.append(rss_obj.makeReport())
 

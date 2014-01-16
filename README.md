@@ -32,6 +32,30 @@ feed_obj = rss.Feed(feed_url)
 # Load the data
 items = feed_obj.getFeed()
 ```
+In order to customize it for your feed you will need to modify the `Entry` class in rss.py. First you will need to assign fields in the `__init__` method:
+
+def __init__(self, rss_parsed):
+        # Extracting fields from the feed data
+        self.title = rss_parsed['title']
+        self.desc = rss_parsed['description']
+        self.guid = rss_parsed['guid']
+
+        # Splitting the description into a dictionary
+        desc_dict = self.splitDesc(self.desc)
+
+        # Extracting fields from description (check field names)
+        self.duration = desc_dict["Duration"]
+        self.category_name = self.title[11:]
+        self.approach = desc_dict["Approach"]
+        self.departure = desc_dict["Departure"]
+        self.maximum_elevation = int(desc_dict["Maximum Elevation"][:2])
+        self.occured_on = self.makeDateTime(desc_dict)
+
+        # Location data
+        self.latitude = -41.288
+        self.longitude = 174.7772
+
+You can add as many or as few fields as you want. 
 
 The `Entry` class has a method `splitDesc(desc)` which splits a description grabbed from an RSS feed into a dictionary so that it can be processed easily. For example:
 
@@ -50,16 +74,19 @@ Departure: 106 above SSE <br/>;
 {"Date": "Tuesday Jan 14, 2014", "Time": "9:19 PM", "Duration": "less than 1 minute", "Maximum Elevation": "12", "Approach": "12 above SSE", "Departure": "106 above SSE"}
 ```
 
-...and then the description string is assembled in the `getDescription()` method.
+...and then the description string is assembled in the `getDescription()` method:
 
-rss.py will have to be modified for each individual feed so that it grabs from the correct fields. The following methods will likely need some modification:
+```python
+# Returns string of formatted description for ThunderMaps
+def getDescription(self):
+	description_str = "Travelling from " + self.approach + " to " + self.departure + " for " + self.duration + "."
+        return description_str
+```
 
-* `__init__` method for the `Entry` class and the `getFeed()` method in the `Feed` class so that the right fields are passed to it
-* `getDescription()` which returns a description string, assembled from various fields
+Other methods in the Entry class which may need modification:
+
 * `getDateTime()` which returns the occured_on datetime object
-* `getCategory()` which returns the category name
 * `makeReport()` which returns the formatted report for ThunderMaps.
-
 
 NASA's feed posts a big batch of events every few weeks. Rather than sending them all to Thundermaps (including ones into the past and far into the future), rss.py is currently set to send all the events which are happening today. This functionality can be changed or removed entirely in the following lines:
 
@@ -69,6 +96,8 @@ NASA's feed posts a big batch of events every few weeks. Rather than sending the
         # Adds the object to the list of valid entries
         all_entries.append(rss_obj)
 ```
+
+There are some examples in the Examples folder which may help.
 
 ### Thundermaps module
 

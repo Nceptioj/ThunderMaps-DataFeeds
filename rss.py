@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Designed to fetch timed RSS data from NASA's spot the station feed but could be modified for other feeds.
+# Designed to fetch timed RSS data from NASA's spot the station feed. Modify the Entry class for other feeds.
 # NASA's feed is updated every two weeks with the next two weeks entries so this will check the feed for
 # occurances in the next day.
 # Author: Fraser Thompson
@@ -8,21 +8,67 @@
 import feedparser
 from datetime import datetime
 
+# Entire Feed
+class Feed:
+    def __init__(self, rss):
+        self.rss = rss
+
+    # Creates a feedparser object for feed, processes it, return list of report dicts for each valid entry.
+    def getFeed(self):
+        self.rss_parsed = feedparser.parse(self.rss)
+        self.time_now = datetime.now()
+        all_entries = []
+
+        for i in range(0, self.getLength()):
+            rss_obj = Entry(self.rss_parsed['entries'][i])
+
+            # Checks to see if the event happens today and appears over 40 degrees, is visible
+            if rss_obj.occured_on.day == self.time_now.day & rss_obj.maximum_elevation > 40:
+                # Adds the report to the list of valid entries
+                all_entries.append(rss_obj.makeReport())
+
+        return all_entries
+
+    def getLength(self):
+        return len(self.rss_parsed['entries'])
+
 # Individual RSS entry
 class Entry:
-    def __init__(self, title, desc, guid):
-        # Raw Description, used if description needs no processing
-        self.desc_str = desc 
-        # Description which has been split into a dictionary
-        desc_dict = self.splitDesc(desc) 
-        # Modify the following to extract fields from the description.
+    def __init__(self, rss_parsed):
+        # Extracting fields from the feed data
+        self.title = rss_parsed['title']
+        self.desc = rss_parsed['description']
+        self.guid = rss_parsed['guid']
+
+        # Splitting the description into a dictionary
+        desc_dict = self.splitDesc(self.desc)
+
+        # Extracting fields from description (check field names)
         self.duration = desc_dict["Duration"]
+        self.category_name = self.title[11:]
         self.approach = desc_dict["Approach"]
         self.departure = desc_dict["Departure"]
         self.maximum_elevation = int(desc_dict["Maximum Elevation"][:2])
-        self.guid = guid
         self.occured_on = self.makeDateTime(desc_dict)
-        self.category_name = title[11:] # Where to get the category name from. In this case it's in the first 11 characters of the title.
+
+        # Location data
+        self.latitude = -41.288
+        self.longitude = 174.7772
+
+    # Returns string of formatted description for ThunderMaps
+    def getDescription(self):
+        description_str = "Travelling from " + self.approach + " to " + self.departure + " for " + self.duration + "."
+        return description_str
+
+    # Makes a report for each RSS entry to be used by ThunderMaps.
+    def makeReport(self):
+        listing = {"occurred_on":self.occured_on.strftime('%d/%m/%Y %I:%M %p'),
+                    "latitude": self.latitude,
+                    "longitude": self.longitude,
+                    "description": self.getDescription(),
+                    "category_name":self.category_name + " - NASA Alert",
+                    "source_id":self.guid}
+        return listing
 
     # Whips up an easily comparable datetime object from the Date and Time fields of the RSS entry
     # Gets called by splitDesc.
@@ -45,51 +91,6 @@ class Entry:
     @staticmethod
     def splitDesc(desc):
         desc = " ".join(desc.split())
-        desc_dict = dict(item.split(': ') for item in desc.split(' <br/> '))
-        desc_dict["Departure"] = desc_dict["Departure"][:-6] #because of a pesky regex thing
+        desc_dict = dict(item.split(': ') for item in desc.split(' <br /> '))
+        desc_dict["Departure"] = desc_dict["Departure"][:-6] #because of a pesky regex thing, not usually necessary
         return desc_dict
-
-    # Makes a report for each RSS entry to be used by ThunderMaps.
-    def makeReport(self):
-        listing = {"occurred_on":self.occured_on.strftime('%d/%m/%Y %I:%M %p'),
-                    "latitude": -41.288,
-                    "longitude": 174.7772,
-                    "description": self.getDescription(),
-                    "category_name":self.category_name + " - NASA Alert",
-                    "source_id":self.guid}
-        return listing
-
-    # Returns string of formatted description for ThunderMaps
-    def getDescription(self):
-        description_str = "Travelling from " + self.approach + " to " + self.departure + " for " + self.duration + "."
-        return description_str
-
-# Entire RSS feed
-class Feed:
-    def __init__(self, rss):
-        self.rss = rss
-
-    # Creates a feedparser object for feed, processes it, return list of report dicts for each valid entry.
-    def getFeed(self):
-        self.rss_parsed = feedparser.parse(self.rss)
-        self.time_now = datetime.now()
-        all_entries = []
-
-        for i in range(0, self.getLength()):
-            # May be named differently in your feed. There may also be other relevant fields which you can parse
-            # and send to rss_obj as parameters.
-            title = self.rss_parsed['entries'][i]['title']
-            desc = self.rss_parsed['entries'][i]['description']
-            guid = self.rss_parsed['entries'][i]['guid']
-
-            rss_obj = Entry(title, desc, guid)
-
-            # Checks to see if the event happens today and if it will be visible (above 40 degrees elevation)
-            if rss_obj.occured_on.day == self.time_now.day & rss_obj.maximum_elevation > 40:
-                # Adds the report to the list of valid entries
-                all_entries.append(rss_obj.makeReport())
-
-        return all_entries
-
-    def getLength(self):
-        return len(self.rss_parsed['entries'])

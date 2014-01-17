@@ -8,10 +8,12 @@ It's currently set up to work with NASA's [SpotTheStation](http://spotthestation
 Dependencies
 ------------
 
-* The `feedparser` library for Python3.
-* The `requests` library for Python3.
-* A Thundermaps API key and account ID.
-* The URL of some RSS or Atom feed to grab from.
+* The `feedparser` library for Python3 (see below)
+* The `requests` library for Python3
+* A Thundermaps API key and account ID
+* The URL of some RSS or Atom feed to grab from
+
+Feedparser 5.1.3 currently has a bug which will cause issues (in this case it breaks everything) in Python 3. For this reason you should get Feedparser 5.1.2 instead. 
 
 Usage
 -----

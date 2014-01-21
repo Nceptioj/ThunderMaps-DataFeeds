@@ -41,7 +41,7 @@ updater.start(0.20)
 
 ### Modifying for your feed
 
-In order to customize it for your feed you will need to modify the `Feed` class. First you will need to assign fields in the `getFeed()` method based on what specific data you need to grab from your feed. In the case of NASA's feed the following fields are grabbed:
+In order to customize it for your feed you will need to modify the `Feed` class. First you will need to assign fields in the `getFeed()` method based on what specific data you need to grab from your feed. Here the main data is extracted and put into a variable:
 
 ```python
 # Extracting fields from the feed data
@@ -49,6 +49,8 @@ title = rss_parsed['title']
 desc = rss_parsed['description']
 guid = rss_parsed['guid']
 ```
+
+The `title`, `description` and `guid` fields are standard for RSS feeds so this shouldn't require any modification but you might need to grab from more fields.
 
 The `Feed` class has a static method `splitDesc(desc)` which splits a description grabbed from an RSS feed into a dictionary so that it can be processed easily. For example:
 
@@ -67,14 +69,16 @@ gets split into:
 {"Date": "Tuesday Jan 14, 2014", "Time": "9:19 PM", "Duration": "less than 1 minute", "Maximum Elevation": "12", "Approach": "12 above SSE", "Departure": "106 above SSE"}
 ```
 
-This means you can grab fields from within the description and pass them to ThunderMaps. In the example it's called like this:
+This means you can grab fields from within the description and pass them to ThunderMaps. In some cases this isn't necessary and you can just ignore it.
+
+In the example it's called like this:
 
 ```python
 # Splitting the description into a dictionary
 desc_dict = self.splitDesc(desc)
 ```
 
-And then the fields are grabbed from the dictionary and assigned to variables:
+And then the fields are grabbed from the dictionary and assigned to variables. You will need to modify this:
 
 ```
 # Extracting fields from description (check field names)

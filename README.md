@@ -17,7 +17,7 @@ Feedparser 5.1.3 currently has a bug which will cause issues (in this case it br
 
 Usage
 -----
-First modify these with your details and feed URL:
+First set these fields with your details and feed URL:
 
 ```python
 FEED_URL="http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml"
@@ -26,17 +26,31 @@ THUNDERMAPS_API_KEY=""
 THUNDERMAPS_ACCOUNT_ID=""
 ```
 
+The Updater class should require no modification and is called like so at the bottom of the updater_example:
+
+```python
+updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
+updater.start()
+```
+
+You can optionally pass the start method an update interval in hours. By default it will update daily. Like this:
+
+```python
+updater.start(0.20)
+```
+
+### Modifying for your feed
+
 In order to customize it for your feed you will need to modify the `Feed` class. First you will need to assign fields in the `getFeed()` method based on what specific data you need to grab from your feed. In the case of NASA's feed the following fields are grabbed:
 
 ```python
-	# Extracting fields from the feed data
-    	title = rss_parsed['title']
-	desc = rss_parsed['description']
-	guid = rss_parsed['guid']
+# Extracting fields from the feed data
+title = rss_parsed['title']
+desc = rss_parsed['description']
+guid = rss_parsed['guid']
 ```
 
 The `Feed` class has a static method `splitDesc(desc)` which splits a description grabbed from an RSS feed into a dictionary so that it can be processed easily. For example:
-
 
 ```
 Date: Tuesday Jan 14, 2014 <br/>;
@@ -49,33 +63,34 @@ Departure: 106 above SSE <br/>;
 
 gets split into:
 
-
 ```python
 {"Date": "Tuesday Jan 14, 2014", "Time": "9:19 PM", "Duration": "less than 1 minute", "Maximum Elevation": "12", "Approach": "12 above SSE", "Departure": "106 above SSE"}
 ```
 
-This means you can grab fields from within the description and pass them to ThunderMaps. In the NASA example the following are grabbed:
+This means you can grab fields from within the description and pass them to ThunderMaps. In the example it's called like this:
 
-```
-	# Splitting the description into a dictionary
-	desc_dict = self.splitDesc(desc)
-
-	# Extracting fields from description (check field names)
-	duration = desc_dict["Duration"]
-	category_name = title[11:]
-	approach = desc_dict["Approach"]
-	departure = desc_dict["Departure"]
-	maximum_elevation = int(desc_dict["Maximum Elevation"][:2])
-	occured_on = self.makeDateTime(desc_dict)
-
-	# Location data
-	latitude = -41.288
-	longitude = 174.7772
+```python
+# Splitting the description into a dictionary
+desc_dict = self.splitDesc(desc)
 ```
 
-You can have as many or as few fields as you want.
+And then the fields are grabbed from the dictionary and assigned to variables:
 
-You will need to modify the `getDescription(desc)` method too, and this will return the description which is sent to ThunderMaps:
+```
+# Extracting fields from description (check field names)
+duration = desc_dict["Duration"]
+category_name = title[11:]
+approach = desc_dict["Approach"]
+departure = desc_dict["Departure"]
+maximum_elevation = int(desc_dict["Maximum Elevation"][:2])
+occured_on = self.makeDateTime(desc_dict)
+
+# Location data
+latitude = -41.288
+longitude = 174.7772
+```
+
+You will need to modify the `getDescription(desc)` method too. It returns the description which is sent to ThunderMaps:
 
 ```python
 # Returns string of formatted description for ThunderMaps

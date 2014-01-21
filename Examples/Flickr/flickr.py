@@ -8,11 +8,11 @@ import flickrapi
 import time
 import thundermaps
 
-FLICKR_API_KEY="9d123f1afc97cb199c9e1c074ebd9432"
-FLICKR_API_SECRET="15d448f490f78503"
+FLICKR_API_KEY=""
+FLICKR_API_SECRET=""
 
-THUNDERMAPS_API_KEY="03a01ba4d1d3c60feec7fe7a4cc832b6"
-THUNDERMAPS_ACCOUNT_ID="flickr-testing"
+THUNDERMAPS_API_KEY=""
+THUNDERMAPS_ACCOUNT_ID=""
 
 class Flickr:
     def __init__(self, FLICKR_API_KEY, FLICKR_API_SECRET):
@@ -58,13 +58,12 @@ class Flickr:
                        "latitude":lat,
                        "longitude":long,
                        "description": self.getDescription(title, owner, url, location),
-                       "category_name":"Flickr Photos",
+                       "category_name":"Flickr Photos (NZ)",
                        "source_id":url}
 
             #create a list of dictionaries
             listings.append(listing)
         return listings
-
 
 class Updater:
     def __init__(self, key, account_id):

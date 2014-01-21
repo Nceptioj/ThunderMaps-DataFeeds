@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 '''
 Created on 21/01/2014
-
 @author: Fraser Thompson
 '''
 

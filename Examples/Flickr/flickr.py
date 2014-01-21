@@ -5,13 +5,14 @@ Created on 21/01/2014
 '''
 
 import flickrapi
+import time
 import thundermaps
 
-FLICKR_API_KEY="..."
-FLICKR_API_SECRET="..."
+FLICKR_API_KEY="9d123f1afc97cb199c9e1c074ebd9432"
+FLICKR_API_SECRET="15d448f490f78503"
 
-THUNDERMAPS_API_KEY="..."
-THUNDERMAPS_ACCOUNT_ID="..."
+THUNDERMAPS_API_KEY="03a01ba4d1d3c60feec7fe7a4cc832b6"
+THUNDERMAPS_ACCOUNT_ID="flickr-testing"
 
 class Flickr:
     def __init__(self, FLICKR_API_KEY, FLICKR_API_SECRET):
@@ -21,7 +22,7 @@ class Flickr:
 
     @staticmethod
     def getDescription(title, owner, url, location):
-        desc = '"'+ title + '" by ' + owner + " at " + location + "."
+        desc = '"'+ title + '" by ' + owner + " at " + location + ".\n" + url
         return desc
 
 

@@ -58,7 +58,7 @@ class Feed:
                     "category_name":category_name + " - NASA Alert",
                     "source_id": guid}
                 # Adds the report to the list of valid entries
-                listings.append(listing)
+                listings.insert(0, listing)
 
         return listings
 

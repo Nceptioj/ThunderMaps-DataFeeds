@@ -17,7 +17,7 @@ from geopy import geocoders
 FEED_URL="http://www.trumba.com/calendars/seattlegov-city-wide.rss"
 
 THUNDERMAPS_API_KEY=""
-THUNDERMAPS_ACCOUNT_ID=""
+THUNDERMAPS_ACCOUNT_ID="seattle-events"
 
 class Feed:
     def __init__(self, FEED_URL):
@@ -25,25 +25,27 @@ class Feed:
 
     def getFeed(self):
 
-        # Storing a local copy because there's like 500 elements
-        if not os.path.exists('local_copy.xml'):
-            print("Opening HTTP request...")
-            r = requests.get(FEED_URL, stream=True)
-            print("Request opened.")
+#         # Storing a local copy because there's like 500 elements
+#         if not os.path.exists('local_copy.xml'):
+#             print("Opening HTTP request...")
+#             r = requests.get(FEED_URL, stream=True)
+#             print("Request opened.")
+#
+#             try:
+#                     with open('local_copy.xml', 'wb') as f:
+#                         print("Writing file...")
+#                         for chunk in r.iter_content(chunk_size=1024):
+#                             if chunk:
+#                                 f.write(chunk)
+#                                 f.flush()
+#             except IOError:
+#                 print("IOError")
+#
+#         rss_parsed_top = feedparser.parse(r'local_copy.xml')
 
-            try:
-                    with open('local_copy.xml', 'wb') as f:
-                        print("Writing file...")
-                        for chunk in r.iter_content(chunk_size=1024):
-                            if chunk:
-                                f.write(chunk)
-                                f.flush()
-            except IOError:
-                print("IOError")
+        rss_parsed_top = feedparser.parse(FEED_URL)
 
-        rss_parsed_top = feedparser.parse(r'local_copy.xml')
-
-        #length = len(rss_parsed_top['entries'])
+        length = len(rss_parsed_top['entries'])
         count = 0
 
         time_nows = datetime.now()
@@ -53,7 +55,7 @@ class Feed:
 
         listings = []
 
-        for i in range(0, 20):
+        for i in range(0, length):
             rss_parsed = rss_parsed_top['entries'][i]
 
             # Extracting fields from the feed data
@@ -64,47 +66,6 @@ class Feed:
             # Splitting the description into a dictionary
             desc_dict = self.splitDesc(desc)
 
-            # Extracting fields from description only if they exist
-            category_name = "Event"
-            if "Event Types" in desc_dict:
-                category_name = desc_dict["Event Types"]
-
-            occured_on = self.makeDateTime(desc_dict["Date"])
-
-            description_in = None
-            if "Description" in desc_dict:
-                description_in = desc_dict["Description"]
-
-            neighborhoods = None
-            if "Neighborhoods" in desc_dict:
-                neighborhoods = desc_dict["Neighborhoods"]
-
-            contact = None
-            if "Contact" in desc_dict:
-                contact = desc_dict["Contact"]
-
-            phone = None
-            if "Contact Phone" in desc_dict:
-                phone = desc_dict["Contact Phone"]
-
-            email = None
-            if "Contact Email" in desc_dict:
-                email = desc_dict["Contact Email"]
-
-            audience = None
-            if "Audience" in desc_dict:
-                audience = desc_dict["Audience"]
-
-            pre = None
-            if "Pre-Register" in desc_dict:
-                pre = desc_dict["Pre-Register"]
-
-            cost = None
-            if "Cost" in desc_dict:
-                cost = desc_dict["Cost"]
-
-            description = self.getDescription(description_in, neighborhoods, contact, phone, email, audience, pre, cost)
-
             # Location data
             latitude = None
             if desc_dict["Latitude"] != None:
@@ -114,25 +75,75 @@ class Feed:
             if desc_dict["Longitude"] != None:
                 longitude = desc_dict["Longitude"]
 
-            # Checks to see if the event happens in the next 3 days an has geo data
-            margin = timedelta(days = 3)
+            # Find occured on date
+            occured_on = self.makeDateTime(desc_dict["Date"])
+
+            # Only do the rest if it happens in the next 5 days and has location data
+            margin = timedelta(days = 5)
             if ((time_now < occured_on < time_now + margin) & (latitude != None)):
+
+                date_word = desc_dict["date_word"]
+
+                # Extracting fields from description only if they exist
+                category_name = "Event"
+                if "Event Types" in desc_dict:
+                    category_name = desc_dict["Event Types"]
+
+
+                description_in = None
+                if "Description" in desc_dict:
+                    description_in = desc_dict["Description"]
+
+                neighborhoods = None
+                if "Neighborhoods" in desc_dict:
+                    neighborhoods = desc_dict["Neighborhoods"]
+
+                contact = None
+                if "Contact" in desc_dict:
+                    contact = desc_dict["Contact"]
+
+                phone = None
+                if "Contact Phone" in desc_dict:
+                    phone = desc_dict["Contact Phone"]
+
+                email = None
+                if "Contact Email" in desc_dict:
+                    email = desc_dict["Contact Email"]
+
+                audience = None
+                if "Audience" in desc_dict:
+                    audience = desc_dict["Audience"]
+
+                pre = None
+                if "Pre-Register" in desc_dict:
+                    pre = desc_dict["Pre-Register"]
+
+                cost = None
+                if "Cost" in desc_dict:
+                    cost = desc_dict["Cost"]
+
+                description = self.getDescription(date_word, description_in, neighborhoods, contact, phone, email, audience, pre, cost, title)
+
                 listing = {"occurred_on":occured_on.strftime('%d/%m/%Y %I:%M %p'),
                     "latitude": latitude,
                     "longitude": longitude,
                     "description": description,
                     "category_name":category_name + " - Seattle Events",
                     "source_id": guid}
+
                 # Adds the report to the list of valid entries
                 count = count + 1
                 print(listing)
-                listings.append(listing)
+                listings.insert(0, listing)
 
         print("Found", count, "events.")
         return listings
 
-    def getDescription(self, description, neighborhoods, contact, phone, email, audience, pre, cost):
+    def getDescription(self, date_word, description, neighborhoods, contact, phone, email, audience, pre, cost, title):
         description_lst = []
+
+        description_lst.append("Title: " + title + "<br/>")
+        description_lst.append("Date/Time: " + date_word + "<br/>")
 
         part_1 = None
         if description != None:
@@ -218,7 +229,6 @@ class Feed:
         local = pytz.timezone("US/Pacific")
         local_dt = local.localize(updated_obj, is_dst = None)
         utc_dt = local_dt.astimezone(pytz.utc)
-
         return utc_dt
 
     def geocoder(self, address):
@@ -243,8 +253,13 @@ class Feed:
 
         # Split date and time away from address
         date = firstpart.pop(-1)
-        date_front = date.split("&")
-        date = date_front[0]
+
+        # Make a string version
+        date_word = date
+        date_word = date_word.replace("&nbsp;&ndash;&nbsp;", " - ")
+
+        # Make a version for datetime
+        date = date.split("&")[0]
         date = date.split(" ")
 
         # Get rid of useless stuff at beginning
@@ -252,14 +267,8 @@ class Feed:
             date.pop(0)
             date.pop(0)
 
-        # Get rid of ampersands
-        #for i in range(0, len(date)):
-         #   if date[i].find("&"):
-          #      thing = date[i].split("&")
-           #     date[i] = thing[0]
-
         # Finishing up with date
-        date = " ".join(date[:4])
+        date = " ".join(date[:5])
         date = date.strip()
         date = date.strip(",")
 
@@ -280,6 +289,8 @@ class Feed:
         desc_dict = dict(item.split('</b>:&nbsp;') for item in working_desc.split(' <br/>'))
 
         desc_dict["Date"] = date
+        desc_dict["date_word"] = date_word
+
 
         try:
             desc_dict["Latitude"] = latlong[1][0]
@@ -360,4 +371,4 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start()
+updater.start(1)

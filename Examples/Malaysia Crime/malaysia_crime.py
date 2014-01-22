@@ -14,7 +14,7 @@ import thundermaps
 
 FEED_URL="http://feeds.feedburner.com/malaysiacrime/latest.xml"
 
-THUNDERMAPS_API_KEY=""
+THUNDERMAPS_API_KEY="03a01ba4d1d3c60feec7fe7a4cc832b6"
 THUNDERMAPS_ACCOUNT_ID="malaysia-crime-reports"
 
 class Feed:
@@ -32,7 +32,7 @@ class Feed:
 
         listings = []
 
-        for i in range(0, length):
+        for i in range(0, length-1):
             rss_parsed = rss_parsed_top['entries'][i]
 
             # Extracting fields from the feed data
@@ -51,7 +51,7 @@ class Feed:
             longitude = float(georss.split()[1])
 
             # Checks to see if the event happened in the last few days
-            margin = timedelta(days = 3)
+            margin = timedelta(days = 5)
             if (utc_dt - margin < occured_on < utc_dt + margin):
                 listing = {"occurred_on":occured_on.strftime('%d/%m/%Y %I:%M %p'),
                     "latitude": latitude,
@@ -59,8 +59,7 @@ class Feed:
                     "description": desc,
                     "category_name": "Malaysia Crime Reports",
                     "source_id": "<a>" + guid + "</a>"}
-                # Adds the report to the list of valid entries
-                listings.append(listing)
+                listings.insert(0, listing)
 
         return listings
 
@@ -103,7 +102,7 @@ class Updater:
                 # Add the report to the list of reports if it hasn't already been posted.
                 if report["source_id"] not in source_ids:
                     reports.append(report)
-                    print("Adding %s" % report["description"])
+                    print("Adding %s" % report["source_id"])
                     # Add the source id to the list.
                     source_ids.append(report["source_id"])
 
@@ -138,9 +137,9 @@ class Updater:
                 if update_interval < 1:
                     print("* Will check again in", update_interval_s, "seconds.")
                 else:
-                    print("* Will check again in", update_interval, "hours.")
+                    print("* Will check again in", update_interval, "hour(s).")
 
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start()
+updater.start(4)

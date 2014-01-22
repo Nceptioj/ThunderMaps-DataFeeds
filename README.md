@@ -1,9 +1,9 @@
 Thundermaps-DataFeeds
 ===================
 
-This repository provides a Python module for grabbing entries from an RSS feed, using the [ThunderMaps](http://thundermaps.com/) API to post reports and periodically creating Thundermaps reports for the latest RSS entries.
+This repository provides example Python scripts for grabbing entries from an RSS feed and using the [ThunderMaps](http://thundermaps.com/) API to periodically post reports.
 
-It's currently set up to work with NASA's [SpotTheStation](http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml) service but could be easily modified for other feeds.
+The example in the root directory is set up to work with NASA's [SpotTheStation](http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml) service. There are other examples in the Example folder which may be more relevant.
 
 Dependencies
 ------------
@@ -22,18 +22,18 @@ First set these fields with your details and feed URL:
 ```python
 FEED_URL="http://spotthestation.nasa.gov/sightings/xml_files/New_Zealand_None_Wellington.xml"
 
-THUNDERMAPS_API_KEY=""
-THUNDERMAPS_ACCOUNT_ID=""
+THUNDERMAPS_API_KEY="..."
+THUNDERMAPS_ACCOUNT_ID="..."
 ```
 
-The Updater class should require no modification and is called like so at the bottom of the updater_example:
+The Updater class should require no modification and is called at the bottom of the `updater_example.py`:
 
 ```python
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
 updater.start()
 ```
 
-You can optionally pass the start method an update interval in hours. By default it will update daily. Like this:
+You can optionally pass the start method an update interval in hours but by default it will update daily. Like this:
 
 ```python
 updater.start(0.20)
@@ -41,7 +41,7 @@ updater.start(0.20)
 
 ### Modifying for your feed
 
-In order to customize it for your feed you will need to modify the `Feed` class. First you will need to assign fields in the `getFeed()` method based on what specific data you need to grab from your feed. Here the main data is extracted and put into a variable:
+In order to customize it for your feed you will need to modify the `Feed` class. First you will need to assign fields in the `getFeed()` method based on what specific data you need to grab from your feed. Here the main data is extracted and put into variables:
 
 ```python
 # Extracting fields from the feed data
@@ -50,7 +50,7 @@ desc = rss_parsed['description']
 guid = rss_parsed['guid']
 ```
 
-The `title`, `description` and `guid` fields are standard for RSS feeds so this shouldn't require any modification but you might need to grab from more fields.
+The `title`, `description` and `guid` fields are standard for RSS feeds so this shouldn't require any modification but you might need to grab from more fields. This is easy to do. `rss_parsed` is a dictionary containing the data from the XML file.
 
 The `Feed` class has a static method `splitDesc(desc)` which splits a description grabbed from an RSS feed into a dictionary so that it can be processed easily. For example:
 
@@ -69,7 +69,7 @@ gets split into:
 {"Date": "Tuesday Jan 14, 2014", "Time": "9:19 PM", "Duration": "less than 1 minute", "Maximum Elevation": "12", "Approach": "12 above SSE", "Departure": "106 above SSE"}
 ```
 
-This means you can grab fields from within the description and pass them to ThunderMaps. In some cases this isn't necessary and you can just ignore it.
+This means you can grab fields from within the description and pass them to ThunderMaps. In some cases this isn't necessary and you can just ignore it. In other cases it will require heavy modification. Descriptions can be a pain to deal with but it might help to check out some of the other examples.
 
 In the example it's called like this:
 
@@ -105,7 +105,7 @@ def getDescription(self):
 
 Other methods in the Feed class which may need modification:
 
-* `getDateTime()` which returns the occured_on datetime object
+* `getDateTime()` which returns the occured_on datetime object. 
 
 NASA's feed posts a big batch of events every few weeks. Rather than sending them all to Thundermaps (including ones into the past and far into the future), the example is currently set to send all the events which are happening today. This functionality can be changed or removed entirely in the following lines:
 
@@ -113,8 +113,6 @@ NASA's feed posts a big batch of events every few weeks. Rather than sending the
  # Checks to see if the event happens today and appears over 40 degrees, is visible
 if ((occured_on.day == time_now.day) & (maximum_elevation > 40)):
 ```
-
-There are some other examples in the Examples folder which may help.
 
 ### Thundermaps module
 

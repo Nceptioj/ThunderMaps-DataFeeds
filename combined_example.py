@@ -142,14 +142,18 @@ class Updater:
             if update_interval < 0:
                 t = time.localtime()
                 t = time.mktime(t[:3] + (0, 0, 0) + t[6:])
-                update_interval = (t + 24*3600 - time.time())
+                update_interval_s = (t + 24*3600 - time.time())
                 print("* Will check again tomorrow.")
             else:
                 # Convert hours into seconds
-                update_interval = update_interval*60*60
-                print("* Will check again in", update_interval, "hour(s).")
+                update_interval_s = update_interval*60*60
 
-            time.sleep(update_interval)
+                if update_interval < 1:
+                    print("* Will check again in", update_interval_s, "seconds.")
+                else:
+                    print("* Will check again in", update_interval, "hours.")
+
+            time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
 updater.start()

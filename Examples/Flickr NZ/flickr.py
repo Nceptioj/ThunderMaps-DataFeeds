@@ -12,7 +12,7 @@ FLICKR_API_KEY=""
 FLICKR_API_SECRET=""
 
 THUNDERMAPS_API_KEY=""
-THUNDERMAPS_ACCOUNT_ID=""
+THUNDERMAPS_ACCOUNT_ID="flickr-testing"
 
 class Flickr:
     def __init__(self, FLICKR_API_KEY, FLICKR_API_SECRET):
@@ -23,7 +23,7 @@ class Flickr:
 
     def getDescription(self):
         desc_lst = []
-        desc_lst.append("<a href=\"" + self.url + "\"><br><img title=\"Click for larger view\" src=\"" + self.thumb_url + "\" alt=\"Click for larger view\"></a></br>")
+        desc_lst.append("<a href=\"" + self.image_url + "\"><br><img title=\"Click for larger view\" src=\"" + self.thumb_url + "\" alt=\"Click for larger view\"></a></br>")
         desc_lst.append("'"+ self.title + "'" + " by "  + "<a href=\"" + self.owner_url + "\">" + self.owner + "</a> at " + self.location + ".</br>")
         desc_str = "</br>".join(desc_lst)
         return desc_str
@@ -58,6 +58,7 @@ class Flickr:
             ext = photo_info["photo"].get("originalformat", "jpg")
             self.owner = photo_info["photo"]["owner"]["username"]
             self.owner_url = flickr.urls.getUserProfile(user_id=nsid)["user"]["url"]
+            self.image_url = photo_info["photo"]["urls"]["url"][0]["_content"]
 
             # Location information
             lat = float(photo_info["photo"]["location"]["latitude"])

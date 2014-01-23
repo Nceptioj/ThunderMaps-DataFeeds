@@ -79,7 +79,8 @@ class Flickr:
                        "longitude":long,
                        "description": self.getDescription(),
                        "category_name":"Flickr Photos (AUS)",
-                       "source_id":self.url}
+                       "source_id":self.url,
+                       "attachment_url": self.url}
 
             #create a list of dictionaries
             listings.insert(0, listing)
@@ -121,6 +122,15 @@ class Updater:
             if len(reports) > 0:
                 # Upload 10 at a time.
                 for some_reports in [reports[i:i+10] for i in range(0, len(reports), 10)]:
+                    for report in some_reports:
+                        # Add image
+                        image_id = self.tm_obj.uploadImage(report["attachment_url"])
+
+                        if image_id != None:
+                            print("[%s] Uploaded image for listing %s..." % (time.strftime("%c"), report["source_id"]))
+                            report["attachment_ids"] = [image_id]
+                        del report["attachment_url"]
+
                     print("Sending %d reports..." % len(some_reports))
                     self.tm_obj.sendReports(self.account_id, some_reports)
                     time.sleep(3)

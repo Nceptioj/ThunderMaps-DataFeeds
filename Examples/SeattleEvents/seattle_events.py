@@ -67,13 +67,8 @@ class Feed:
             desc_dict = self.splitDesc(desc)
 
             # Location data
-            latitude = None
-            if desc_dict["Latitude"] != None:
-                latitude = desc_dict["Latitude"]
-
-            longitude = None
-            if desc_dict["Longitude"] != None:
-                longitude = desc_dict["Longitude"]
+            latitude = desc_dict.get("Latitude", default=None)
+            longitude = desc_dict.get("Longitude", default=None)
 
             # Find occured on date
             occured_on = self.makeDateTime(desc_dict["Date"])
@@ -85,42 +80,15 @@ class Feed:
                 date_word = desc_dict["date_word"]
 
                 # Extracting fields from description only if they exist
-                category_name = "Event"
-                if "Event Types" in desc_dict:
-                    category_name = desc_dict["Event Types"]
-
-
-                description_in = None
-                if "Description" in desc_dict:
-                    description_in = desc_dict["Description"]
-
-                neighborhoods = None
-                if "Neighborhoods" in desc_dict:
-                    neighborhoods = desc_dict["Neighborhoods"]
-
-                contact = None
-                if "Contact" in desc_dict:
-                    contact = desc_dict["Contact"]
-
-                phone = None
-                if "Contact Phone" in desc_dict:
-                    phone = desc_dict["Contact Phone"]
-
-                email = None
-                if "Contact Email" in desc_dict:
-                    email = desc_dict["Contact Email"]
-
-                audience = None
-                if "Audience" in desc_dict:
-                    audience = desc_dict["Audience"]
-
-                pre = None
-                if "Pre-Register" in desc_dict:
-                    pre = desc_dict["Pre-Register"]
-
-                cost = None
-                if "Cost" in desc_dict:
-                    cost = desc_dict["Cost"]
+                category_name = desc_dict.get("Event Types", "Event")
+                description_in = desc_dict.get("Description", None)
+                neighborhoods = desc_dict.get("Neighborhoods", None)
+                contact = desc_dict.get("Contact", None)
+                phone = desc_dict.get("Contact Phone", None)
+                email = desc_dict.get("Contact Email", =None)
+                audience = desc_dict.get("Audience", None)
+                pre = desc_dict.get("Pre-Register", None)
+                cost = desc_dict.get("Cost", None)
 
                 description = self.getDescription(date_word, description_in, neighborhoods, contact, phone, email, audience, pre, cost, title)
 
@@ -145,41 +113,34 @@ class Feed:
         description_lst.append("Title: " + title + "<br/>")
         description_lst.append("Date/Time: " + date_word + "<br/>")
 
-        part_1 = None
         if description != None:
             part_1 = "Description: " + description + "<br/>"
             description_lst.append(part_1)
 
-        part_2 = None
         if neighborhoods != None:
             part_2 = "Neighborhoods: " + neighborhoods + "<br/>"
             description_lst.append(part_2)
 
-        part_3 = None
         if contact != None:
             part_3 = "Contact: " + contact + "<br/>"
             description_lst.append(part_3)
 
-        part_4 = None
         if phone != None:
             part_4 = "Phone: " + phone + "<br/>"
             description_lst.append(part_4)
-        part_5 = None
+
         if email != None:
             part_5 = "Email: " + email + "<br/>"
             description_lst.append(part_5)
 
-        part_6 = None
         if audience != None:
             part_6 = "Audience: " + audience + "<br/>"
             description_lst.append(part_6)
 
-        part_7 = None
         if pre != None:
             part_7 = "Pre-Entry: " + pre + "<br/>"
             description_lst.append(part_7)
 
-        part_8 = None
         if cost != None:
             part_8 = "Cost: " + cost + "<br/>"
             description_lst.append(part_8)
@@ -313,7 +274,7 @@ class Updater:
         # Try to load the source_ids already posted.
         source_ids = []
         try:
-            source_ids_file = open(".source_ids_sample", "r")
+            source_ids_file = open(".source_ids_seattle", "r")
             source_ids = [i.strip() for i in source_ids_file.readlines()]
             source_ids_file.close()
         except Exception as e:
@@ -344,7 +305,7 @@ class Updater:
                     time.sleep(3)
             # Save the posted source_ids.
             try:
-                source_ids_file = open(".source_ids_store", "w")
+                source_ids_file = open(".source_ids_seattle", "w")
                 for i in source_ids:
                     source_ids_file.write("%s\n" % i)
                 source_ids_file.close()

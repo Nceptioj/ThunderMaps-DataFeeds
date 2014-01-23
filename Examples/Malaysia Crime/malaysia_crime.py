@@ -14,7 +14,7 @@ import thundermaps
 
 FEED_URL="http://feeds.feedburner.com/malaysiacrime/latest.xml"
 
-THUNDERMAPS_API_KEY="03a01ba4d1d3c60feec7fe7a4cc832b6"
+THUNDERMAPS_API_KEY=""
 THUNDERMAPS_ACCOUNT_ID="malaysia-crime-reports"
 
 class Feed:
@@ -44,7 +44,7 @@ class Feed:
 
             # Formatting description
             desc = re.sub('<[^>]*>', '', desc)
-            desc = "TITLE: " + title + "\n" + desc[:400].strip() + "..." + " Read more: " + guid
+            desc = "TITLE: " + title + "\n" + desc[:450].strip() + "..." + "<a href=\"" + guid + "\"><strong>read more</strong></a>"
 
             # Location data
             latitude = float(georss.split()[0])
@@ -58,7 +58,7 @@ class Feed:
                     "longitude": longitude,
                     "description": desc,
                     "category_name": "Malaysia Crime Reports",
-                    "source_id": "<a>" + guid + "</a>"}
+                    "source_id":  guid }
                 listings.insert(0, listing)
 
         return listings
@@ -84,7 +84,7 @@ class Updater:
         # Try to load the source_ids already posted.
         source_ids = []
         try:
-            source_ids_file = open(".source_ids_sample", "r")
+            source_ids_file = open(".source_ids_malaysiacrime", "r")
             source_ids = [i.strip() for i in source_ids_file.readlines()]
             source_ids_file.close()
         except Exception as e:
@@ -115,7 +115,7 @@ class Updater:
                     time.sleep(3)
             # Save the posted source_ids.
             try:
-                source_ids_file = open(".source_ids_sample", "w")
+                source_ids_file = open(".source_ids_malaysiacrime", "w")
                 for i in source_ids:
                     source_ids_file.write("%s\n" % i)
                 source_ids_file.close()

@@ -33,11 +33,12 @@ class Flickr:
         flickr = flickrapi.FlickrAPI(FLICKR_API_KEY, FLICKR_API_SECRET, format='parsed-json')
 
         # For finding the ID of a new place to use in the search method
-        #print(flickr.places.find(query = "New Zealand"))
+        #print(flickr.places.find(query = "Australia"))
 
-        # Return safe photos taken in last four hours in nz
-        photos = flickr.photos.search(min_upload_date=int(time.time()-14400), min_taken_date=int(int(time.time()-14400)), accuracy=16, has_geo=1,
-                                      safe_search="safe_search", per_page='10', content_type=1, place_id="X_2zAGVTUb5..jhXDw")
+        # Return safe photos taken in last two hours in Australia
+        photos = flickr.photos.search(min_upload_date=int(time.time()-7200), min_taken_date=int(int(time.time()-7200)), accuracy=16, has_geo=1,
+                                      safe_search="safe_search", per_page='10', content_type=1, place_id="3fHNxEZTUb4mc08chA")
+
 
         photos_lst = photos['photos']['photo']
         self.num_found = len(photos_lst)
@@ -76,7 +77,7 @@ class Flickr:
                        "latitude":lat,
                        "longitude":long,
                        "description": self.getDescription(),
-                       "category_name":"Flickr Photos (NZ)",
+                       "category_name":"Flickr Photos (AUS)",
                        "source_id":self.url}
 
             #create a list of dictionaries
@@ -93,7 +94,7 @@ class Updater:
         # Try to load the source_ids already posted.
         source_ids = []
         try:
-            source_ids_file = open(".source_ids_flickrnz", "r")
+            source_ids_file = open(".source_ids_flickrau", "r")
             source_ids = [i.strip() for i in source_ids_file.readlines()]
             source_ids_file.close()
         except Exception as e:
@@ -124,7 +125,7 @@ class Updater:
                     time.sleep(3)
             # Save the posted source_ids.
             try:
-                source_ids_file = open(".source_ids_flickrnz", "w")
+                source_ids_file = open(".source_ids_flickrau", "w")
                 for i in source_ids:
                     source_ids_file.write("%s\n" % i)
                 source_ids_file.close()

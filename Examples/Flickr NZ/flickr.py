@@ -38,9 +38,12 @@ class Flickr:
         # Return safe photos taken in last four hours in nz
         photos = flickr.photos.search(min_upload_date=int(time.time()-14400), min_taken_date=int(int(time.time()-14400)), accuracy=16, has_geo=1,
                                       safe_search="safe_search", per_page='10', content_type=1, place_id="X_2zAGVTUb5..jhXDw")
-
-        photos_lst = photos['photos']['photo']
-        self.num_found = len(photos_lst)
+        try:
+            photos_lst = photos['photos']['photo']
+            self.num_found = len(photos_lst)
+        except KeyError:
+            print("No photos available! Did you put in your Flickr and ThunderMaps API keys?")
+            pass
 
         listings = []
 

@@ -38,10 +38,13 @@ class Flickr:
         # Return safe photos taken in last two hours in Australia
         photos = flickr.photos.search(min_upload_date=int(time.time()-7200), min_taken_date=int(int(time.time()-7200)), accuracy=16, has_geo=1,
                                       safe_search="safe_search", per_page='10', content_type=1, place_id="3fHNxEZTUb4mc08chA")
+        try:
+            photos_lst = photos['photos']['photo']
+            self.num_found = len(photos_lst)
+        except KeyError:
+            print("No photos available! Did you put in your Flickr and ThunderMaps API keys?")
+            pass
 
-
-        photos_lst = photos['photos']['photo']
-        self.num_found = len(photos_lst)
 
         listings = []
 
@@ -58,7 +61,6 @@ class Flickr:
             nsid = str(photo_info["photo"]["owner"]["nsid"])
             ext = photo_info["photo"].get("originalformat", "jpg")
             self.owner = photo_info["photo"]["owner"]["username"]
-            self.owner_url = flickr.urls.getUserProfile(user_id=nsid)["user"]["url"]
             self.image_url = photo_info["photo"]["urls"]["url"][0]["_content"]
 
             # Location information
@@ -73,6 +75,7 @@ class Flickr:
             # URLs
             self.url = "http://farm" + farm_id + ".staticflickr.com/" + server_id + "/" + photo_id + "_" + secret + "." + ext
             self.thumb_url = "http://farm" + farm_id + ".staticflickr.com/" + server_id + "/" + photo_id + "_" + secret + "_n." + ext
+            self.owner_url = flickr.urls.getUserProfile(user_id=nsid)["user"]["url"]
 
             listing = {"occurred_on":date,
                        "latitude":lat,

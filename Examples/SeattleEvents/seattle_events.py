@@ -59,7 +59,7 @@ class Feed:
             rss_parsed = rss_parsed_top['entries'][i]
 
             # Extracting fields from the feed data
-            title = rss_parsed['title']
+            self.title = rss_parsed['title']
             desc = rss_parsed['description']
             guid = rss_parsed['guid']
 
@@ -81,16 +81,16 @@ class Feed:
 
                 # Extracting fields from description only if they exist
                 category_name = desc_dict.get("Event Types", "Event")
-                description_in = desc_dict.get("Description", None)
-                neighborhoods = desc_dict.get("Neighborhoods", None)
-                contact = desc_dict.get("Contact", None)
-                phone = desc_dict.get("Contact Phone", None)
-                email = desc_dict.get("Contact Email", =None)
-                audience = desc_dict.get("Audience", None)
-                pre = desc_dict.get("Pre-Register", None)
-                cost = desc_dict.get("Cost", None)
+                self.description_in = desc_dict.get("Description", None)
+                self.neighborhoods = desc_dict.get("Neighborhoods", None)
+                self.contact = desc_dict.get("Contact", None)
+                self.phone = desc_dict.get("Contact Phone", None)
+                self.email = desc_dict.get("Contact Email", None)
+                self.audience = desc_dict.get("Audience", None)
+                self.pre = desc_dict.get("Pre-Register", None)
+                self.cost = desc_dict.get("Cost", None)
 
-                description = self.getDescription(date_word, description_in, neighborhoods, contact, phone, email, audience, pre, cost, title)
+                description = self.getDescription()
 
                 listing = {"occurred_on":occured_on.strftime('%d/%m/%Y %I:%M %p'),
                     "latitude": latitude,
@@ -107,42 +107,42 @@ class Feed:
         print("Found", count, "events.")
         return listings
 
-    def getDescription(self, date_word, description, neighborhoods, contact, phone, email, audience, pre, cost, title):
+    def getDescription(self):
         description_lst = []
 
-        description_lst.append("Title: " + title + "<br/>")
-        description_lst.append("Date/Time: " + date_word + "<br/>")
+        description_lst.append("Title: " + self.title + "<br/>")
+        description_lst.append("Date/Time: " + self.date_word + "<br/>")
 
-        if description != None:
-            part_1 = "Description: " + description + "<br/>"
+        if self.description != None:
+            part_1 = "Description: " + self.description + "<br/>"
             description_lst.append(part_1)
 
-        if neighborhoods != None:
-            part_2 = "Neighborhoods: " + neighborhoods + "<br/>"
+        if self.neighborhoods != None:
+            part_2 = "Neighborhoods: " + self.neighborhoods + "<br/>"
             description_lst.append(part_2)
 
-        if contact != None:
-            part_3 = "Contact: " + contact + "<br/>"
+        if self.contact != None:
+            part_3 = "Contact: " + self.contact + "<br/>"
             description_lst.append(part_3)
 
-        if phone != None:
-            part_4 = "Phone: " + phone + "<br/>"
+        if self.phone != None:
+            part_4 = "Phone: " + self.phone + "<br/>"
             description_lst.append(part_4)
 
-        if email != None:
-            part_5 = "Email: " + email + "<br/>"
+        if self.email != None:
+            part_5 = "Email: " + self.email + "<br/>"
             description_lst.append(part_5)
 
-        if audience != None:
-            part_6 = "Audience: " + audience + "<br/>"
+        if self.audience != None:
+            part_6 = "Audience: " + self.audience + "<br/>"
             description_lst.append(part_6)
 
-        if pre != None:
-            part_7 = "Pre-Entry: " + pre + "<br/>"
+        if self.pre != None:
+            part_7 = "Pre-Entry: " + self.pre + "<br/>"
             description_lst.append(part_7)
 
-        if cost != None:
-            part_8 = "Cost: " + cost + "<br/>"
+        if self.cost != None:
+            part_8 = "Cost: " + self.cost + "<br/>"
             description_lst.append(part_8)
 
         description_str = " ".join(description_lst)

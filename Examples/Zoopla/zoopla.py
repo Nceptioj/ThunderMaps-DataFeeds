@@ -7,7 +7,7 @@ to thundermaps at a timed interval. Refer to documentation for more info.
 '''
 
 from datetime import datetime, timedelta
-import time
+import time, pytz
 import requests
 import thundermaps
 
@@ -17,58 +17,95 @@ THUNDERMAPS_ACCOUNT_ID="zoopla-property-alerts"
 class Feed:
 
     def getFeed(self):
-        remotedata = requests.get("http://api.zoopla.co.uk/api/v1/property_listings.js?area=Oxford&api_key=4hgz7nf49nd2fkw9av63rpnm&page_size=100&order_by=age")
-        rt_tree = remotedata.json()
-
-        time_now = datetime.now()
-        length = len(rt_tree["listing"])
-        print(rt_tree["result_count"])
         listings = []
 
-        for i in range(0, length):
-            thing = rt_tree["listing"][i]
+        # Max pages to check
+        max_pages = 10
+        escape = False
 
-            self.address = thing["displayable_address"]
-            self.description = thing["short_description"]
-            self.url = thing["image_url"]
-            self.thumb_url = thing["thumbnail_url"]
-            self.bedrooms = thing["num_bedrooms"]
-            self.price = int(thing["price"])
-            self.num_bedrooms = thing["num_bedrooms"]
-            self.guid = thing["details_url"]
-            self.first_listed = thing["first_published_date"]
-            self.status = thing["listing_status"]
+        # Iterate pages
+        for i in range (1, max_pages):
+            print("checking page " + str(i))
+            remotedata = requests.get("http://api.zoopla.co.uk/api/v1/property_listings.js?area=England&api_key=4hgz7nf49nd2fkw9av63rpnm&page_size=100&order_by=age&summarised=true&page_number=" + str(i))
+            rt_tree = remotedata.json()
 
-            latitude = thing["latitude"]
-            longitude = thing["longitude"]
-            category_name = thing["property_type"]
-            occured_on = self.makeDateTime(thing["last_published_date"])
+            # Finding current time and making it timezone aware
+            time_naive = datetime.now()
+            local = pytz.timezone("Pacific/Auckland")
+            local_dt = local.localize(time_naive, is_dst = None)
+            time_now = local_dt.astimezone(pytz.utc)
 
-            # Checks only events from the past day
-            margin = timedelta(days = 1)
-            if (time_now - margin < occured_on):
+            length = len(rt_tree["listing"])
+
+            # Iterate listings
+            for j in range(0, length):
+                thing = rt_tree["listing"][j]
+
+                # Checks only events from the past time interval
+                margin = timedelta(minutes = 0, hours = 1, days = 0, seconds = 0)
+                occured_on = self.makeDateTime(thing["last_published_date"])
+
+                # Skip it if it's too old, stop checking on next page
+                if ((time_now - margin) > occured_on):
+                    escape = True
+                    continue
+
+                self.url = thing["image_url"]
+                self.thumb_url = thing["thumbnail_url"]
+                self.caption = thing["image_caption"]
+                self.guid = thing["details_url"]
+
+                self.address = thing["displayable_address"]
+                self.description = thing["description"]
+                self.price = int(thing["price"])
+                self.num_bedrooms = thing["num_bedrooms"]
+                self.num_bathrooms = thing["num_bathrooms"]
+                self.first_listed = thing["first_published_date"]
+                self.status = thing["listing_status"]
+
+                latitude = thing["latitude"]
+                longitude = thing["longitude"]
+                category_name = thing["property_type"]
+
                 listing = {"occurred_on":occured_on.strftime('%d/%m/%Y %I:%M %p'),
                     "latitude": latitude,
                     "longitude": longitude,
                     "description": self.getDescription(),
                     "category_name":(category_name if category_name != "" else self.num_bedrooms + " bedrooms") + " for "+ self.status + " - Zoopla Property Alert",
                     "source_id": self.guid}
+
                 # Adds the report to the list of valid entries
                 listings.insert(0, listing)
+                print(listing)
+
+            # Stop checking pages
+            if escape == True:
+                break
+
         print(len(listings))
         return listings
 
     def getDescription(self):
         desc_lst = []
         desc_lst.append("<a href=\"" + self.guid + "\"><br><img title=\"Click for larger view\" src=\"" + self.url + "\" alt=\"Click for larger view\"></a></br>")
+        # Add caption to image if there is one
+        if self.caption != "":
+            desc_lst.append("'" + self.caption + "'<br>")
         desc_lst.append("<strong>First listed: £" + "{0:,}".format(self.price) + " on " + self.first_listed + "</strong>")
+        desc_lst.append("<strong>Num Bedrooms: " + self.num_bedrooms + "</strong>")
+        desc_lst.append("<strong>Num Bathrooms: " + self.num_bathrooms + "</strong></br>")
         desc_lst.append(self.description + "<a href=\"" + self.guid + "\">" + " read more</a>")
         return "</br>".join(desc_lst)
 
     def makeDateTime(self, string):
         format_12 = '%Y-%m-%d %H:%M:%S'
         updated_obj = datetime.strptime(string, format_12)
-        return updated_obj
+
+        # Make it timezone aware
+        local = pytz.timezone("Europe/London")
+        local_dt = local.localize(updated_obj, is_dst = None)
+        utc_dt = local_dt.astimezone(pytz.utc)
+        return utc_dt
 
 class Updater:
     def __init__(self, key, account_id):
@@ -138,4 +175,4 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start()
+updater.start(1)

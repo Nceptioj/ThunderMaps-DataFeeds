@@ -5,14 +5,16 @@ Created on 21/01/2014
 '''
 
 import flickrapi
-import time, pytz
+import time
+import sys
+sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import thundermaps
 
 FLICKR_API_KEY=""
 FLICKR_API_SECRET=""
 
 THUNDERMAPS_API_KEY=""
-THUNDERMAPS_ACCOUNT_ID="flickr-testing"
+THUNDERMAPS_ACCOUNT_ID="flickr-photos-australia"
 
 class Flickr:
     def __init__(self, FLICKR_API_KEY, FLICKR_API_SECRET):
@@ -20,11 +22,13 @@ class Flickr:
         self.FLICKR_API_SECRET = FLICKR_API_SECRET
         self.num_found = 0
 
-
+    # Assembles the description to be attached to each report
     def getDescription(self):
         desc_lst = []
-        desc_lst.append("<a href=\"" + self.image_url + "\"><br><img title=\"Click for larger view\" src=\"" + self.thumb_url + "\" alt=\"Click for larger view\"></a></br>")
+        #Description
         desc_lst.append("'"+ self.title + "'" + " by "  + "<a href=\"" + self.owner_url + "\">" + self.owner + "</a> at " + self.location + ".</br>")
+        #Image
+        desc_lst.append("<a href=\"" + self.image_url + "\"><br><img title=\"Click for larger view\" src=\"" + self.thumb_url + "\" alt=\"Click for larger view\"></a></br>")
         desc_str = "</br>".join(desc_lst)
         return desc_str
 
@@ -32,18 +36,19 @@ class Flickr:
     def format_feed(self):
         flickr = flickrapi.FlickrAPI(FLICKR_API_KEY, FLICKR_API_SECRET, format='parsed-json')
 
-        # For finding the ID of a new place to use in the search method
-        #print(flickr.places.find(query = "New Zealand"))
+        # For finding the ID of a new place to use in the search method. Replace query with place you want.
+        #print(flickr.places.find(query = "Australia"))
 
-        # Return safe photos taken in last four hours in nz
-        photos = flickr.photos.search(min_upload_date=int(time.time()-14400), min_taken_date=int(int(time.time()-14400)), accuracy=16, has_geo=1,
-                                      safe_search="safe_search", per_page='10', content_type=1, place_id="X_2zAGVTUb5..jhXDw")
+        # Return safe photos taken in last two hours in Australia
+        photos = flickr.photos.search(min_upload_date=int(time.time()-3600), min_taken_date=int(int(time.time()-3600)), accuracy=16, has_geo=1,
+                                      safe_search="safe_search", per_page='10', content_type=1, place_id="3fHNxEZTUb4mc08chA")
         try:
             photos_lst = photos['photos']['photo']
             self.num_found = len(photos_lst)
         except KeyError:
             print("No photos available! Did you put in your Flickr and ThunderMaps API keys?")
             pass
+
 
         listings = []
 
@@ -60,7 +65,6 @@ class Flickr:
             nsid = str(photo_info["photo"]["owner"]["nsid"])
             ext = photo_info["photo"].get("originalformat", "jpg")
             self.owner = photo_info["photo"]["owner"]["username"]
-            self.owner_url = flickr.urls.getUserProfile(user_id=nsid)["user"]["url"]
             self.image_url = photo_info["photo"]["urls"]["url"][0]["_content"]
 
             # Location information
@@ -75,14 +79,15 @@ class Flickr:
             # URLs
             self.url = "http://farm" + farm_id + ".staticflickr.com/" + server_id + "/" + photo_id + "_" + secret + "." + ext
             self.thumb_url = "http://farm" + farm_id + ".staticflickr.com/" + server_id + "/" + photo_id + "_" + secret + "_n." + ext
+            self.owner_url = flickr.urls.getUserProfile(user_id=nsid)["user"]["url"]
 
             listing = {"occurred_on":date,
                        "latitude":lat,
                        "longitude":long,
                        "description": self.getDescription(),
-                       "category_name":"Flickr Photos (NZ)",
+                       "category_name":"Flickr Photos (AUS)",
                        "source_id":self.url,
-                       "attachment_url":self.url}
+                       "attachment_url": self.url}
 
             #create a list of dictionaries
             listings.insert(0, listing)
@@ -98,7 +103,7 @@ class Updater:
         # Try to load the source_ids already posted.
         source_ids = []
         try:
-            source_ids_file = open(".source_ids_flickrnz", "r")
+            source_ids_file = open(".source_ids_flickrau", "r")
             source_ids = [i.strip() for i in source_ids_file.readlines()]
             source_ids_file.close()
         except Exception as e:
@@ -113,12 +118,10 @@ class Updater:
             # Create reports for the listings.
             reports = []
             for report in items:
-
                 # Add the report to the list of reports if it hasn't already been posted.
                 if report["source_id"] not in source_ids:
                     reports.append(report)
                     print("Adding %s" % report["description"])
-
                     # Add the source id to the list.
                     source_ids.append(report["source_id"])
 
@@ -127,7 +130,6 @@ class Updater:
                 # Upload 10 at a time.
                 for some_reports in [reports[i:i+10] for i in range(0, len(reports), 10)]:
                     for report in some_reports:
-
                         # Add image
                         image_id = self.tm_obj.uploadImage(report["attachment_url"])
 
@@ -139,10 +141,9 @@ class Updater:
                     print("Sending %d reports..." % len(some_reports))
                     self.tm_obj.sendReports(self.account_id, some_reports)
                     time.sleep(3)
-
             # Save the posted source_ids.
             try:
-                source_ids_file = open(".source_ids_flickrnz", "w")
+                source_ids_file = open(".source_ids_flickrau", "w")
                 for i in source_ids:
                     source_ids_file.write("%s\n" % i)
                 source_ids_file.close()
@@ -169,4 +170,4 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start(2)
+updater.start(1)

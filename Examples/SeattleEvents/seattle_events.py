@@ -1,17 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''
 Created on 21/01/2014
 This is a combined Feed grabber and automatic ThunderMaps updater. It will grab from a feed, generate reports, and post them
-to thundermaps at a timed interval. NASA's Spot The Station RSS feed is used as an example. Refer to documentation for more info.
+to thundermaps at a timed interval. Refer to documentation for more info.
 @author: Fraser Thompson
 '''
 
-import feedparser, requests
+import feedparser
 from datetime import datetime, timedelta
 import time, pytz
 import re
+#import os
+#import requests
+import sys
+sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import thundermaps
-import os
 from geopy import geocoders
 
 FEED_URL="http://www.trumba.com/calendars/seattlegov-city-wide.rss"
@@ -40,10 +43,10 @@ class Feed:
 #                                 f.flush()
 #             except IOError:
 #                 print("IOError")
-#
-#         rss_parsed_top = feedparser.parse(r'local_copy.xml')
 
-        rss_parsed_top = feedparser.parse(FEED_URL)
+        rss_parsed_top = feedparser.parse(r'local_copy.xml')
+
+        #rss_parsed_top = feedparser.parse(FEED_URL)
 
         length = len(rss_parsed_top['entries'])
         count = 0
@@ -67,8 +70,8 @@ class Feed:
             desc_dict = self.splitDesc(desc)
 
             # Location data
-            latitude = desc_dict.get("Latitude", default=None)
-            longitude = desc_dict.get("Longitude", default=None)
+            latitude = desc_dict.get("Latitude", None)
+            longitude = desc_dict.get("Longitude", None)
 
             # Find occured on date
             occured_on = self.makeDateTime(desc_dict["Date"])
@@ -77,7 +80,7 @@ class Feed:
             margin = timedelta(days = 5)
             if ((time_now < occured_on < time_now + margin) & (latitude != None)):
 
-                date_word = desc_dict["date_word"]
+                self.date_word = desc_dict["date_word"]
 
                 # Extracting fields from description only if they exist
                 category_name = desc_dict.get("Event Types", "Event")
@@ -113,8 +116,8 @@ class Feed:
         description_lst.append("Title: " + self.title + "<br/>")
         description_lst.append("Date/Time: " + self.date_word + "<br/>")
 
-        if self.description != None:
-            part_1 = "Description: " + self.description + "<br/>"
+        if self.description_in != None:
+            part_1 = "Description: " + self.description_in + "<br/>"
             description_lst.append(part_1)
 
         if self.neighborhoods != None:
@@ -193,8 +196,10 @@ class Feed:
         return utc_dt
 
     def geocoder(self, address):
-        #Geocodes addresses using the GoogleV3 package. This converts addresses to lat/long pairs
+        #Geocodes addresses using the GoogleV3 package. This converts addresses to lat/long pair
         try:
+            # Trying to avoid being locked out
+            time.sleep(3)
             g = geocoders.GoogleV3()
             (lat, long) = g.geocode(address)
             if (lat, long) == 'None':
@@ -202,6 +207,10 @@ class Feed:
             else:
                 return (lat, long)
         except TypeError:
+            pass
+        except geocoders:
+            print("Quota for geocoder API key exceeded!")
+            time.sleep(3)
             pass
 
     # Figuring out the extremely annoyingly formatted description.
@@ -332,4 +341,4 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start(1)
+updater.start(24)

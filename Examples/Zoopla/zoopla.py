@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''
 Created on 21/01/2014
 This is a combined Feed grabber and automatic ThunderMaps updater. It will grab from a feed, generate reports, and post them
@@ -7,26 +7,29 @@ to thundermaps at a timed interval. Refer to documentation for more info.
 '''
 
 from datetime import datetime, timedelta
+import sys
+sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import time, pytz
 import requests
 import thundermaps
 
 THUNDERMAPS_API_KEY=""
 THUNDERMAPS_ACCOUNT_ID="zoopla-property-alerts"
+AREA="Oxford"
 
 class Feed:
 
     def getFeed(self):
         listings = []
 
-        # Max pages to check
-        max_pages = 10
+        # Max pages to check (100 listings per page)
+        max_pages = 5
         escape = False
 
         # Iterate pages
         for i in range (1, max_pages):
             print("checking page " + str(i))
-            remotedata = requests.get("http://api.zoopla.co.uk/api/v1/property_listings.js?area=England&api_key=4hgz7nf49nd2fkw9av63rpnm&page_size=100&order_by=age&summarised=true&page_number=" + str(i))
+            remotedata = requests.get("http://api.zoopla.co.uk/api/v1/property_listings.js?area="+AREA+"&api_key=4hgz7nf49nd2fkw9av63rpnm&page_size=100&order_by=age&summarised=true&page_number=" + str(i))
             rt_tree = remotedata.json()
 
             # Finding current time and making it timezone aware
@@ -42,7 +45,8 @@ class Feed:
                 thing = rt_tree["listing"][j]
 
                 # Checks only events from the past time interval
-                margin = timedelta(minutes = 0, hours = 1, days = 0, seconds = 0)
+                # This is the interval to check backwards into
+                margin = timedelta(minutes = 0, hours = 12, days = 0, seconds = 0)
                 occured_on = self.makeDateTime(thing["last_published_date"])
 
                 # Skip it if it's too old, stop checking on next page
@@ -72,11 +76,11 @@ class Feed:
                     "longitude": longitude,
                     "description": self.getDescription(),
                     "category_name":(category_name if category_name != "" else self.num_bedrooms + " bedrooms") + " for "+ self.status + " - Zoopla Property Alert",
+                    "attachment_url": self.url,
                     "source_id": self.guid}
 
                 # Adds the report to the list of valid entries
                 listings.insert(0, listing)
-                print(listing)
 
             # Stop checking pages
             if escape == True:
@@ -85,16 +89,21 @@ class Feed:
         print(len(listings))
         return listings
 
+    # Assembles the description to be attached to each report
     def getDescription(self):
         desc_lst = []
-        desc_lst.append("<a href=\"" + self.guid + "\"><br><img title=\"Click for larger view\" src=\"" + self.url + "\" alt=\"Click for larger view\"></a></br>")
-        # Add caption to image if there is one
-        if self.caption != "":
-            desc_lst.append("'" + self.caption + "'<br>")
+        # Description
         desc_lst.append("<strong>First listed: £" + "{0:,}".format(self.price) + " on " + self.first_listed + "</strong>")
         desc_lst.append("<strong>Num Bedrooms: " + self.num_bedrooms + "</strong>")
         desc_lst.append("<strong>Num Bathrooms: " + self.num_bathrooms + "</strong></br>")
         desc_lst.append(self.description + "<a href=\"" + self.guid + "\">" + " read more</a>")
+        # Image
+        desc_lst.append("<a href=\"" + self.guid + "\"><br><img title=\"Click for larger view\" src=\"" + self.url + "\" alt=\"Click for larger view\"></a></br>")
+        # Add caption to image if there is one
+        if self.caption != "":
+            desc_lst.append("'" + self.caption + "'<br>")
+        # Add Zoopla logo
+        desc_lst.append('<a href="http://www.zoopla.co.uk/"><img src="http://www.zoopla.co.uk/static/images/mashery/powered-by-zoopla.png" width="111" height="54" title="Property information powered by Zoopla" alt="Property information powered by Zoopla" border="0"&gt;</a>')
         return "</br>".join(desc_lst)
 
     def makeDateTime(self, string):
@@ -143,6 +152,13 @@ class Updater:
             if len(reports) > 0:
                 # Upload 10 at a time.
                 for some_reports in [reports[i:i+10] for i in range(0, len(reports), 10)]:
+                    for report in some_reports:
+                        # Add image
+                        image_id = self.tm_obj.uploadImage(report["attachment_url"])
+                        if image_id != None:
+                            print("[%s] Uploaded image for listing %s..." % (time.strftime("%c"), report["source_id"]))
+                            report["attachment_ids"] = [image_id]
+                        del report["attachment_url"]
                     print("Sending %d reports..." % len(some_reports))
                     self.tm_obj.sendReports(self.account_id, some_reports)
                     time.sleep(3)

@@ -10,6 +10,8 @@ import feedparser
 from datetime import datetime, timedelta
 import time, pytz
 import re
+import sys
+sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import thundermaps
 
 FEED_URL="http://feeds.feedburner.com/malaysiacrime/latest.xml"
@@ -48,7 +50,7 @@ class Feed:
 
             # Location data
             latitude = float(georss.split()[0])
-            longitude = float(georss.split()[1])
+            longitude = floatbreak(georss.split()[1])
 
             # Checks to see if the event happened in the last few days
             margin = timedelta(days = 5)

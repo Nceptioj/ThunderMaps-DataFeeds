@@ -40,7 +40,7 @@ class Feed:
         local = pytz.timezone("Pacific/Auckland")
         local_dt = local.localize(time_now, is_dst = None)
         time_now = local_dt.astimezone(pytz.utc)
-        token = "70ed49afaec90db1380a45e379b7185ff29d8e60"
+        token = ""
 
         listings = []
         more = True

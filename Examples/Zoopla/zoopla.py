@@ -5,13 +5,17 @@ This is a combined Feed grabber and automatic ThunderMaps updater. It will grab 
 to thundermaps at a timed interval. Refer to documentation for more info.
 @author: Fraser Thompson
 '''
-
+import logging
 from datetime import datetime, timedelta
 import sys
 sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import time, pytz
 import requests
 import thundermaps
+
+LOG_FILENAME = "_errorlog.out"
+logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
+
 
 THUNDERMAPS_API_KEY=""
 THUNDERMAPS_ACCOUNT_ID="zoopla-property-alerts"
@@ -191,4 +195,8 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start(1)
+try:
+    updater.start(1)
+except:
+    logging.exception('Got exception on main handler')
+    raise

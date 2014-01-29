@@ -5,10 +5,14 @@ Created on 21/01/2014
 '''
 
 import flickrapi
+import logging
 import time
 import sys
 sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import thundermaps
+
+LOG_FILENAME = "_errorlog.out"
+logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 
 FLICKR_API_KEY=""
 FLICKR_API_SECRET=""
@@ -113,6 +117,7 @@ class Updater:
             # Load the data from the data feed.
             # This method should return a list of dicts.
             items = self.feed_obj.format_feed()
+            logging.exception('Got exception on main handler')
 
             # Create reports for the listings.
             reports = []
@@ -170,4 +175,8 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start(1)
+try:
+    updater.start(1)
+except:
+   logging.exception('Got exception on main handler')
+   raise

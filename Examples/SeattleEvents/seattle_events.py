@@ -5,7 +5,7 @@ This is a combined Feed grabber and automatic ThunderMaps updater. It will grab 
 to thundermaps at a timed interval. Refer to documentation for more info.
 @author: Fraser Thompson
 '''
-
+import logging
 import feedparser
 from datetime import datetime, timedelta
 import time, pytz
@@ -16,6 +16,9 @@ import sys
 sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import thundermaps
 from geopy import geocoders
+
+LOG_FILENAME = "_errorlog.out"
+logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 
 FEED_URL="http://www.trumba.com/calendars/seattlegov-city-wide.rss"
 
@@ -341,4 +344,8 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start(24)
+try:
+    updater.start(1)
+except:
+    logging.exception('Got exception on main handler')
+    raise

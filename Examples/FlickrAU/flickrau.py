@@ -4,16 +4,20 @@ Created on 21/01/2014
 @author: Fraser Thompson
 '''
 
+import logging
 import flickrapi
 import time
 import sys
-sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
+sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds") #r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds"
 import thundermaps
+
+LOG_FILENAME = "_errorlog.out"
+logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 
 FLICKR_API_KEY=""
 FLICKR_API_SECRET=""
 
-THUNDERMAPS_API_KEY=""
+THUNDERMAPS_API_KEY=''
 THUNDERMAPS_ACCOUNT_ID="flickr-photos-australia"
 
 class Flickr:
@@ -170,4 +174,8 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-updater.start(1)
+try:
+    updater.start(1)
+except:
+   logging.exception('Got exception on main handler')
+   raise

@@ -11,8 +11,8 @@ from datetime import datetime, timedelta
 import time, pytz
 import re
 import sys
-sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
-import thundermaps
+sys.path.append(r"/usr/local/thundermaps") # /usr/local/thundermaps /home/fraser/Thundermaps/ThunderMaps-DataFeeds
+import Wthundermaps as thundermaps
 
 LOG_FILENAME = "_errorlog.out"
 logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
@@ -62,7 +62,6 @@ class Feed:
                     "latitude": latitude,
                     "longitude": longitude,
                     "description": desc,
-                    "category_name": "Malaysia Crime Reports",
                     "source_id":  guid }
                 listings.insert(0, listing)
 

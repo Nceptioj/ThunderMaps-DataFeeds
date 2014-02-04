@@ -8,17 +8,16 @@ to thundermaps at a timed interval. Refer to documentation for more info.
 import logging
 from datetime import datetime, timedelta
 import sys
-sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
+sys.path.append(r"/usr/local/thundermaps") # /usr/local/thundermaps /home/fraser/Thundermaps/ThunderMaps-DataFeeds
 import time, pytz
 import requests
-import thundermaps
+import Pthundermaps_staging as thundermaps
 
 LOG_FILENAME = "_errorlog.out"
 logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 
-
 THUNDERMAPS_API_KEY=""
-THUNDERMAPS_ACCOUNT_ID="zoopla-property-alerts"
+THUNDERMAPS_ACCOUNT_ID="zoopla"
 AREA="Oxford"
 
 class Feed:
@@ -50,7 +49,7 @@ class Feed:
 
                 # Checks only events from the past time interval
                 # This is the interval to check backwards into
-                margin = timedelta(minutes = 0, hours = 12, days = 0, seconds = 0)
+                margin = timedelta(minutes = 0, hours = 24, days = 0, seconds = 0)
                 occured_on = self.makeDateTime(thing["last_published_date"])
 
                 # Skip it if it's too old, stop checking on next page
@@ -79,7 +78,8 @@ class Feed:
                     "latitude": latitude,
                     "longitude": longitude,
                     "description": self.getDescription(),
-                    "category_name":(category_name if category_name != "" else self.num_bedrooms + " bedrooms") + " for "+ self.status + " - Zoopla Property Alert",
+                    "primary_category_name": "UK Property for " + self.status,
+                    "secondary_category_name":(category_name if category_name != "" else self.num_bedrooms + " bedrooms"),
                     "attachment_url": self.url,
                     "source_id": self.guid}
 

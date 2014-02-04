@@ -4,27 +4,20 @@ Created on 21/01/2014
 @author: Fraser Thompson
 '''
 
+import requests, json
 import logging
-import flickrapi
 import time
 import sys
-sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds") #r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds"
+sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
 import thundermaps
 
-LOG_FILENAME = "_errorlog.out"
-logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
+#LOG_FILENAME = "_errorlog.out"
+#logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
 
-FLICKR_API_KEY=""
-FLICKR_API_SECRET=""
+THUNDERMAPS_API_KEY=""
+THUNDERMAPS_ACCOUNT_ID="twitpic"
 
-THUNDERMAPS_API_KEY=''
-THUNDERMAPS_ACCOUNT_ID="flickr-photos-australia"
-
-class Flickr:
-    def __init__(self, FLICKR_API_KEY, FLICKR_API_SECRET):
-        self.FLICKR_API_KEY = FLICKR_API_KEY
-        self.FLICKR_API_SECRET = FLICKR_API_SECRET
-        self.num_found = 0
+class Feed:
 
     # Assembles the description to be attached to each report
     def getDescription(self):
@@ -36,62 +29,31 @@ class Flickr:
         desc_str = "</br>".join(desc_lst)
         return desc_str
 
-
     def format_feed(self):
-        flickr = flickrapi.FlickrAPI(FLICKR_API_KEY, FLICKR_API_SECRET, format='parsed-json')
-
-        # For finding the ID of a new place to use in the search method. Replace query with place you want.
-        #print(flickr.places.find(query = "Australia"))
-
-        # Return safe photos taken in last two hours in Australia
-        photos = flickr.photos.search(min_upload_date=int(time.time()-3600), min_taken_date=int(int(time.time()-3600)), accuracy=16, has_geo=1,
-                                      safe_search="safe_search", per_page='10', content_type=1, place_id="3fHNxEZTUb4mc08chA")
-        try:
-            photos_lst = photos['photos']['photo']
-            self.num_found = len(photos_lst)
-        except KeyError:
-            print("No photos available! Did you put in your Flickr and ThunderMaps API keys?")
-            pass
-
-
         listings = []
+        r = requests.get("http://api.twitpic.com/2/tags/show.json&tag=nature")
+        r_text = json.loads(r.text or r.content)
+        entries = r_text["images"]
+        self.num_found = len(entries)
 
         for i in range(0, self.num_found):
-            self.title = photos_lst[i]['title']
-            photo_id = photos_lst[i]['id']
-            secret = photos_lst[i]['secret']
+            date = entries[i]['timestamp']
+            guid = entries[i]['id']
 
-            # Photo information
-            photo_info = flickr.photos.getInfo(photo_id=photo_id, secret=secret, extras="original_format")
-            server_id = str(photo_info["photo"]["server"])
-            farm_id = str(photo_info["photo"]["farm"])
-            date = str(photo_info["photo"]["dates"]["taken"])
-            nsid = str(photo_info["photo"]["owner"]["nsid"])
-            ext = photo_info["photo"].get("originalformat", "jpg")
-            self.owner = photo_info["photo"]["owner"]["username"]
-            self.image_url = photo_info["photo"]["urls"]["url"][0]["_content"]
-
-            # Location information
-            lat = float(photo_info["photo"]["location"]["latitude"])
-            long = float(photo_info["photo"]["location"]["longitude"])
-            neighbourhood = "Somewhere"
-            if "neighbourhood" in photo_info["photo"]["location"]:
-                neighbourhood = photo_info["photo"]["location"]["neighbourhood"]["_content"]
-            region  = photo_info["photo"]["location"]["region"]["_content"]
-            self.location = neighbourhood + ", " + region
-
-            # URLs
-            self.url = "http://farm" + farm_id + ".staticflickr.com/" + server_id + "/" + photo_id + "_" + secret + "." + ext
-            self.thumb_url = "http://farm" + farm_id + ".staticflickr.com/" + server_id + "/" + photo_id + "_" + secret + "_n." + ext
-            self.owner_url = flickr.urls.getUserProfile(user_id=nsid)["user"]["url"]
+            self.title = entries[i]['message']
+            self.location = entries[i]['location']
+            self.owner = entries[i]['user']['username']
+            self.owner_url = "http://twitpic.com/photos/" + self.owner
+            self.thumb_url = "http://twitpic.com/show/thumb/" + str(guid)
+            self.image_url = "http://twitpic.com/" + str(guid)
 
             listing = {"occurred_on":date,
                        "latitude":lat,
                        "longitude":long,
                        "description": self.getDescription(),
-                       "category_name":"Flickr Photos (AUS)",
-                       "source_id":self.url,
-                       "attachment_url": self.url}
+                       "category_name":"Twitpic Photos",
+                       "source_id":guid,
+                       "attachment_url":self.url}
 
             #create a list of dictionaries
             listings.insert(0, listing)
@@ -100,14 +62,14 @@ class Flickr:
 class Updater:
     def __init__(self, key, account_id):
         self.tm_obj = thundermaps.ThunderMaps(key)
-        self.feed_obj = Flickr(FLICKR_API_KEY, FLICKR_API_SECRET)
+        self.feed_obj = Feed()
         self.account_id = account_id
 
     def start(self, update_interval=-1):
         # Try to load the source_ids already posted.
         source_ids = []
         try:
-            source_ids_file = open(".source_ids_flickrau", "r")
+            source_ids_file = open(".source_ids_flickrnz", "r")
             source_ids = [i.strip() for i in source_ids_file.readlines()]
             source_ids_file.close()
         except Exception as e:
@@ -122,10 +84,12 @@ class Updater:
             # Create reports for the listings.
             reports = []
             for report in items:
+
                 # Add the report to the list of reports if it hasn't already been posted.
                 if report["source_id"] not in source_ids:
                     reports.append(report)
                     print("Adding %s" % report["description"])
+
                     # Add the source id to the list.
                     source_ids.append(report["source_id"])
 
@@ -136,18 +100,17 @@ class Updater:
                     for report in some_reports:
                         # Add image
                         image_id = self.tm_obj.uploadImage(report["attachment_url"])
-
                         if image_id != None:
                             print("[%s] Uploaded image for listing %s..." % (time.strftime("%c"), report["source_id"]))
                             report["attachment_ids"] = [image_id]
                         del report["attachment_url"]
-
                     print("Sending %d reports..." % len(some_reports))
                     self.tm_obj.sendReports(self.account_id, some_reports)
                     time.sleep(3)
+
             # Save the posted source_ids.
             try:
-                source_ids_file = open(".source_ids_flickrau", "w")
+                source_ids_file = open(".source_ids_flickrnz", "w")
                 for i in source_ids:
                     source_ids_file.write("%s\n" % i)
                 source_ids_file.close()
@@ -174,8 +137,8 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-try:
-    updater.start(1)
-except:
-   logging.exception('Got exception on main handler')
-   raise
+#try:
+updater.start(1)
+#except:
+#   logging.exception('Got exception on main handler')
+#   raise

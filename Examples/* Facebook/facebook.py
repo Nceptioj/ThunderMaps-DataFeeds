@@ -4,55 +4,42 @@ Created on 21/01/2014
 @author: Fraser Thompson
 '''
 
-import flickrapi
-import logging
-import time
-import sys
-sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
+from facepy import GraphAPI
+from urllib import parse
+import requests
+import time, pytz
 import thundermaps
 
-LOG_FILENAME = "_errorlog.out"
-logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
-
-FLICKR_API_KEY=""
-FLICKR_API_SECRET=""
+APP_ID=""
+APP_SECRET=""
 
 THUNDERMAPS_API_KEY=""
 THUNDERMAPS_ACCOUNT_ID="flickr-testing"
 
 class Flickr:
-    def __init__(self, FLICKR_API_KEY, FLICKR_API_SECRET):
-        self.FLICKR_API_KEY = FLICKR_API_KEY
-        self.FLICKR_API_SECRET = FLICKR_API_SECRET
+    def __init__(self, APP_ID, APP_SECRET):
+        self.app_id = APP_ID
+        self.app_secret = APP_SECRET
         self.num_found = 0
 
     # Assembles the description to be attached to each report
     def getDescription(self):
         desc_lst = []
-        #Description
-        desc_lst.append("'"+ self.title + "'" + " by "  + "<a href=\"" + self.owner_url + "\">" + self.owner + "</a> at " + self.location + ".</br>")
-        #Image
-        desc_lst.append("<a href=\"" + self.image_url + "\"><br><img title=\"Click for larger view\" src=\"" + self.thumb_url + "\" alt=\"Click for larger view\"></a></br>")
         desc_str = "</br>".join(desc_lst)
         return desc_str
 
 
     def format_feed(self):
-        flickr = flickrapi.FlickrAPI(FLICKR_API_KEY, FLICKR_API_SECRET, format='parsed-json')
-
-        # For finding the ID of a new place to use in the search method
-        #print(flickr.places.find(query = "New Zealand"))
-
-        # Return safe photos taken in last four hours in nz
-        photos = flickr.photos.search(min_upload_date=int(time.time()-3600), min_taken_date=int(int(time.time()-3600)), accuracy=16, has_geo=1,
-                                      safe_search="safe_search", per_page='10', content_type=1, place_id="X_2zAGVTUb5..jhXDw")
-        try:
-            photos_lst = photos['photos']['photo']
-            self.num_found = len(photos_lst)
-        except KeyError:
-            print("No photos available! Did you put in your Flickr and ThunderMaps API keys?")
-            pass
-
+        graph = GraphAPI()
+        response = graph.get(path='oauth/access_token',
+                             client_id=self.app_id,
+                             client_secret=self.app_secret,
+                             grant_type="client_credentials")
+        token = parse.urlparse(response).path
+        token = token.split("=")[1]
+        graph = GraphAPI(token)
+        things = graph.search("the", "post")
+        print(things)
         listings = []
 
         for i in range(0, self.num_found):
@@ -99,7 +86,7 @@ class Flickr:
 class Updater:
     def __init__(self, key, account_id):
         self.tm_obj = thundermaps.ThunderMaps(key)
-        self.feed_obj = Flickr(FLICKR_API_KEY, FLICKR_API_SECRET)
+        self.feed_obj = Flickr(APP_ID, APP_SECRET)
         self.account_id = account_id
 
     def start(self, update_interval=-1):
@@ -117,7 +104,6 @@ class Updater:
             # Load the data from the data feed.
             # This method should return a list of dicts.
             items = self.feed_obj.format_feed()
-            logging.exception('Got exception on main handler')
 
             # Create reports for the listings.
             reports = []
@@ -136,12 +122,15 @@ class Updater:
                 # Upload 10 at a time.
                 for some_reports in [reports[i:i+10] for i in range(0, len(reports), 10)]:
                     for report in some_reports:
+
                         # Add image
                         image_id = self.tm_obj.uploadImage(report["attachment_url"])
+
                         if image_id != None:
                             print("[%s] Uploaded image for listing %s..." % (time.strftime("%c"), report["source_id"]))
                             report["attachment_ids"] = [image_id]
                         del report["attachment_url"]
+
                     print("Sending %d reports..." % len(some_reports))
                     self.tm_obj.sendReports(self.account_id, some_reports)
                     time.sleep(3)
@@ -175,8 +164,4 @@ class Updater:
             time.sleep(update_interval_s)
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
-try:
-    updater.start(1)
-except:
-   logging.exception('Got exception on main handler')
-   raise
+updater.start(2)

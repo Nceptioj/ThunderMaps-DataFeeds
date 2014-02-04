@@ -13,7 +13,7 @@ import time
 
 class ThunderMaps:
 	# Which server to use. "www" is the production server, "staging" is the staging server.
-	server = "staging"
+	server = "www"
 
 	# Create a new ThunderMaps instance with the API key.
 	def __init__(self, key):

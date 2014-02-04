@@ -10,11 +10,11 @@ import feedparser
 from datetime import datetime, timedelta
 import time, pytz
 import re
-#import os
-#import requests
+import os
+import requests
 import sys
-sys.path.append(r"/home/fraser/Thundermaps/ThunderMaps-DataFeeds")
-import thundermaps
+sys.path.append(r"/usr/local/thundermaps") # /usr/local/thundermaps /home/fraser/Thundermaps/ThunderMaps-DataFeeds
+import Wthundermaps as thundermaps
 from geopy import geocoders
 
 LOG_FILENAME = "_errorlog.out"
@@ -31,25 +31,25 @@ class Feed:
 
     def getFeed(self):
 
-#         # Storing a local copy because there's like 500 elements
-#         if not os.path.exists('local_copy.xml'):
-#             print("Opening HTTP request...")
-#             r = requests.get(FEED_URL, stream=True)
-#             print("Request opened.")
-#
-#             try:
-#                     with open('local_copy.xml', 'wb') as f:
-#                         print("Writing file...")
-#                         for chunk in r.iter_content(chunk_size=1024):
-#                             if chunk:
-#                                 f.write(chunk)
-#                                 f.flush()
-#             except IOError:
-#                 print("IOError")
+        # Storing a local copy because there's like 500 elements
+        if not os.path.exists('local_copy.xml'):
+            print("Opening HTTP request...")
+            r = requests.get(FEED_URL, stream=True)
+            print("Request opened.")
 
-        rss_parsed_top = feedparser.parse(r'local_copy.xml')
+            try:
+                    with open('local_copy.xml', 'wb') as f:
+                        print("Writing file...")
+                        for chunk in r.iter_content(chunk_size=1024):
+                            if chunk:
+                                f.write(chunk)
+                                f.flush()
+            except IOError:
+                print("IOError")
 
-        #rss_parsed_top = feedparser.parse(FEED_URL)
+        #rss_parsed_top = feedparser.parse(r'local_copy.xml')
+
+        rss_parsed_top = feedparser.parse(FEED_URL)
 
         length = len(rss_parsed_top['entries'])
         count = 0
@@ -102,7 +102,7 @@ class Feed:
                     "latitude": latitude,
                     "longitude": longitude,
                     "description": description,
-                    "category_name":category_name + " - Seattle Events",
+                    "primary_category_name": category_name,
                     "source_id": guid}
 
                 # Adds the report to the list of valid entries
@@ -211,8 +211,8 @@ class Feed:
                 return (lat, long)
         except TypeError:
             pass
-        except geocoders:
-            print("Quota for geocoder API key exceeded!")
+        except:
+            print("Quota for geocoder API key exceeded?")
             time.sleep(3)
             pass
 
@@ -341,7 +341,9 @@ class Updater:
                 else:
                     print("* Will check again in", update_interval, "hours.")
 
+            os.remove("local_copy.xml")
             time.sleep(update_interval_s)
+
 
 updater = Updater(THUNDERMAPS_API_KEY, THUNDERMAPS_ACCOUNT_ID)
 try:

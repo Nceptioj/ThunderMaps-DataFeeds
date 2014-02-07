@@ -55,7 +55,6 @@ class Feed:
             self.primary_category = cat[0].capitalize()
             self.secondary_category = cat[1].capitalize()
 
-
     def format_feed(self):
         listings = []
 

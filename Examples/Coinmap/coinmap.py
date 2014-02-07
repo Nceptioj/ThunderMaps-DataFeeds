@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 import logging
 import requests
-import time
+import time, pytz
 
 import Wthundermaps as thundermaps
 
@@ -20,7 +20,7 @@ import Wthundermaps as thundermaps
 THUNDERMAPS_API_KEY=""
 THUNDERMAPS_ACCOUNT_ID="coinmap"
 
-FEED_URL="http://www.overpass-api.de/api/xapi?node[payment:bitcoin=yes][@newer="
+FEED_URL="http://overpass.osm.rambler.ru/cgi/xapi?node[payment:bitcoin=yes][@newer="
 
 SOURCE_ID_FILE=".source_ids_coinmap"
 
@@ -60,14 +60,19 @@ class Feed:
 
         # Work out current time minus a time period
         time = datetime.now() - timedelta(days = 0, hours = 12, minutes = 0, seconds = 0)
-        time_str = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        local = pytz.timezone("Pacific/Auckland")
+        local_dt = local.localize(time, is_dst = None)
+        time_now = local_dt.astimezone(pytz.utc)
+
+        time_str = time_now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         # Append the time minus a day to the URL
         url_time = FEED_URL + time_str + "]"
 
         # Get the things
+        print("Getting the feed...")
         r = requests.get(url_time)
-        print("Status: " + str(r.status_code))
+        print("Done. Status: " + str(r.status_code))
         root = ET.fromstring(r.content)
         self.num_found = len(root)
 
